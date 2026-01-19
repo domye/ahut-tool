@@ -6,4 +6,5 @@ import (
 
 type Service struct {
 	client *resty.Client
+	cookie string
 }
