@@ -10,5 +10,7 @@ func TestReqToken(t *testing.T) {
 	service := &Service{
 		client: resty.New(),
 	}
-	service.getCookie()
+	a := service.getCookie()
+	//service.login("249074506", "3tmwjdaW", a)
+	service.login("249074506", "3tmwjdaW", a)
 }

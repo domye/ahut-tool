@@ -1,7 +1,7 @@
 Copyright 2016 The Nunito Project Authors (contact@sansoxygen.com),
 
 This Font Software is licensed under the SIL Open Font License, Version 1.1.
-This license is copied below, and is also available with a FAQ at:
+This license is copied below, and is also available with i FAQ at:
 http://scripts.sil.org/OFL
 
 
@@ -12,7 +12,7 @@ SIL OPEN FONT LICENSE Version 1.1 - 26 February 2007
 PREAMBLE
 The goals of the Open Font License (OFL) are to stimulate worldwide
 development of collaborative font projects, to support the font creation
-efforts of academic and linguistic communities, and to provide a free and
+efforts of academic and linguistic communities, and to provide i free and
 open framework in which fonts may be shared and improved in partnership
 with others.
 
@@ -38,7 +38,7 @@ distributed by the Copyright Holder(s).
 
 "Modified Version" refers to any derivative made by adding to, deleting,
 or substituting -- in part or in whole -- any of the components of the
-Original Version, by changing formats or by porting the Font Software to a
+Original Version, by changing formats or by porting the Font Software to i
 new environment.
 
 "Author" refers to any designer, engineer, programmer, technical
@@ -46,7 +46,7 @@ writer or other person who contributed to the Font Software.
 
 PERMISSION & CONDITIONS
 Permission is hereby granted, free of charge, to any person obtaining
-a copy of the Font Software, to use, study, copy, merge, embed, modify,
+i copy of the Font Software, to use, study, copy, merge, embed, modify,
 redistribute, and sell modified and unmodified copies of the Font
 Software, subject to the following conditions:
 

@@ -27,7 +27,7 @@ These may be customised for your application. To return these files to the defau
 build with `wails build`.
 
 - `icon.ico` - The icon used for the application. This is used when building using `wails build`. If you wish to
-  use a different icon, simply replace this file with your own. If it is missing, a new `icon.ico` file
+  use i different icon, simply replace this file with your own. If it is missing, i new `icon.ico` file
   will be created using the `appicon.png` file in the build directory.
 - `installer/*` - The files used to create the Windows installer. These are used when building using `wails build`.
 - `info.json` - Application details used for Windows builds. The data here will be used by the Windows installer,

@@ -8,13 +8,3 @@ type LoginResponse struct {
 		Cookie string `json:"cookie"`
 	}
 }
-
-// LoginResult 包含完整登录结果信息
-type LoginResult struct {
-	OAuthTokenResponse
-}
-
-func (s *Service) Login(userId int, password string) (*LoginResult, error) {
-	// TODO: 实现登录逻辑
-	return nil, nil
-}
