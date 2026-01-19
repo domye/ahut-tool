@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import {reactive} from 'vue'
-import {Greet} from '../../wailsjs/go/main/App'
+import {Greet} from '../../wailsjs/go/backend/App'
 
 const data = reactive({
   name: "",
@@ -8,7 +8,7 @@ const data = reactive({
 })
 
 function greet() {
-  Greet(data.name).then(result => {
+  Greet(data.name).then((result: string) => {
     data.resultText = result
   })
 }
