@@ -61,7 +61,7 @@ export const useElectricityStore = defineStore('electricity', () => {
       error.value = ''
       GetIMS(xiaoqu.value, ld_Name.value, ld_Id.value, Room_No.value, etype.value)
         .then((response: any) => {
-          electricity.value = response.data
+          electricity.value = response.Data
           resolve()
         })
         .catch((err: any) => {
