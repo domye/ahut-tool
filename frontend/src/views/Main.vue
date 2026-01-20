@@ -35,8 +35,9 @@ function handleLogout() {
 <style scoped>
 .main-layout {
   display: flex;
-  min-height: 100vh;
+  height: 100vh;
   background-color: #e0e5ec;
+  overflow: hidden;
 }
 
 .main-content {
@@ -44,6 +45,7 @@ function handleLogout() {
   margin-left: 240px;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
 .header {
@@ -53,6 +55,7 @@ function handleLogout() {
   align-items: center;
   justify-content: space-between;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  flex-shrink: 0;
 }
 
 .user-info {
@@ -98,5 +101,7 @@ function handleLogout() {
   padding: 24px;
   background-color: #e0e5ec;
   overflow-y: auto;
+  overflow-x: hidden;
+  min-height: 0;
 }
 </style>

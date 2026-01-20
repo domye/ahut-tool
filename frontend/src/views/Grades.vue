@@ -106,9 +106,10 @@
         :columns="columns"
         :data-source="gradesStore.grades"
         :loading="gradesStore.loading"
-        :scroll="{ x: 1500 }"
+        :scroll="{ x: 'max-content' }"
         :pagination="{ pageSize: 10 }"
         bordered
+        size="middle"
       >
         <template #bodyCell="{ column, record }">
           <template v-if="column.key === 'score'">
@@ -175,7 +176,7 @@ onMounted(() => {
 
 <style scoped>
 .grades-container {
-  max-width: 1600px;
+  width: 100%;
 }
 
 .summary-row {
@@ -184,5 +185,26 @@ onMounted(() => {
 
 .filter-form {
   margin-bottom: 24px;
+}
+
+/* 自定义表格样式 */
+:deep(.ant-table-wrapper) {
+  width: 100%;
+}
+
+:deep(.ant-table) {
+  width: 100%;
+}
+
+:deep(.ant-table-container) {
+  width: 100%;
+}
+
+:deep(.ant-table-thead > tr > th) {
+  white-space: nowrap;
+}
+
+:deep(.ant-table-tbody > tr > td) {
+  white-space: nowrap;
 }
 </style>
