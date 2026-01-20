@@ -29,3 +29,16 @@ func (s *Service) sendLoginRequest(formData map[string]string) (int, error) {
 
 	return resp.StatusCode(), nil
 }
+
+// sendGetGradesRequest 获取成绩信息
+func (s *Service) sendGetIMSRequest(formData map[string]string) ([]byte, error) {
+	resp, err := s.client.R().
+		SetFormData(formData).
+		Post("https://pay.ahut.edu.cn/Charge/GetIMS_AHUTService")
+
+	if err != nil {
+		return nil, err
+	}
+
+	return resp.Body(), nil
+}

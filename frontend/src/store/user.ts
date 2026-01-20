@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import { Login } from '../../wailsjs/go/backend/App'
+import { JwxtLogin } from '../../wailsjs/go/backend/App'
 
 export const useUserStore = defineStore('user', () => {
   const isLoggedIn = ref(false)
@@ -16,7 +16,7 @@ export const useUserStore = defineStore('user', () => {
       }
 
       message.value = '登录中...'
-      Login(id, password)
+      JwxtLogin(id, password)
         .then((result: number) => {
           console.log(result)
           if (result === 302) {

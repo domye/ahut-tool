@@ -27,3 +27,9 @@ type GradeSummary struct {
 	AvgGPA      float64 // 平均学分绩点
 	AvgScore    float64 // 平均成绩
 }
+
+// GradesResponse 成绩响应结构体
+type GradesResponse struct {
+	Grades  []Grade       `json:"grades"`
+	Summary *GradeSummary `json:"summary"`
+}
