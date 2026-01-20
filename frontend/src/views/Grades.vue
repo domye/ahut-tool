@@ -52,21 +52,23 @@
     <div class="filter-section">
       <a-form layout="inline" class="filter-form">
         <a-form-item label="开课学期">
-          <a-input
+          <a-select
             v-model:value="gradesStore.kksj"
-            placeholder="请输入开课学期"
+            placeholder="请选择开课学期"
             style="width: 200px"
             allow-clear
+            :options="semesterOptions"
+            popup-class-name="neumorphic-select-dropdown"
           />
         </a-form-item>
-        <a-form-item label="课程性质">
-          <a-input
-            v-model:value="gradesStore.kcxz"
-            placeholder="请输入课程性质"
-            style="width: 200px"
-            allow-clear
-          />
-        </a-form-item>
+<!--        <a-form-item label="课程性质">-->
+<!--          <a-input-->
+<!--            v-model:value="gradesStore.kcxz"-->
+<!--            placeholder="请输入课程性质"-->
+<!--            style="width: 200px"-->
+<!--            allow-clear-->
+<!--          />-->
+<!--        </a-form-item>-->
         <a-form-item label="课程名称">
           <a-input
             v-model:value="gradesStore.kcmc"
@@ -75,20 +77,34 @@
             allow-clear
           />
         </a-form-item>
-        <a-form-item label="显示方式">
-          <a-input
-            v-model:value="gradesStore.xsfs"
-            placeholder="请输入显示方式"
-            style="width: 200px"
-            allow-clear
-          />
-        </a-form-item>
+<!--        <a-form-item label="显示方式">-->
+<!--          <a-input-->
+<!--            v-model:value="gradesStore.xsfs"-->
+<!--            placeholder="请输入显示方式"-->
+<!--            style="width: 200px"-->
+<!--            allow-clear-->
+<!--          />-->
+<!--        </a-form-item>-->
         <a-form-item>
-          <a-space>
-            <a-button type="primary" @click="handleSearch" :loading="gradesStore.loading">
+          <a-space :size="20">
+            <a-button 
+              type="primary" 
+              @click="handleSearch" 
+              :loading="gradesStore.loading"
+              class="neumorphic-button query-button"
+            >
+              <template #icon>
+                <SearchOutlined />
+              </template>
               查询
             </a-button>
-            <a-button @click="handleReset">
+            <a-button 
+              @click="handleReset"
+              class="neumorphic-button reset-button"
+            >
+              <template #icon>
+                <RedoOutlined />
+              </template>
               重置
             </a-button>
           </a-space>
@@ -119,12 +135,38 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted } from 'vue'
+import { onMounted, computed } from 'vue'
 import { useGradesStore } from '../store/grades'
-import { BookOutlined, TrophyOutlined, RiseOutlined, LineChartOutlined } from '@ant-design/icons-vue'
+import { BookOutlined, TrophyOutlined, RiseOutlined, LineChartOutlined, SearchOutlined, RedoOutlined } from '@ant-design/icons-vue'
 import type { TableColumnsType } from 'ant-design-vue'
 
 const gradesStore = useGradesStore()
+
+// 获取当前学期
+// 计算学期选项
+const semesterOptions = computed(() => {
+  const currentDate = new Date()
+  const currentYear = currentDate.getFullYear()
+  const currentMonth = currentDate.getMonth() + 1 // 1-12
+
+  // 确定基准年份：9月及以后使用当前年份，否则使用上一年份
+  const baseYear = currentMonth >= 9 ? currentYear : currentYear - 1
+
+  // 生成前三年到后三年的学期选项
+  return Array.from({ length: 7 }, (_, i) => {
+    const year = baseYear + i - 3
+    return [
+      {
+        value: `${year}-${year + 1}-1`,
+        label: `${year}-${year + 1} 第一学期`
+      },
+      {
+        value: `${year}-${year + 1}-2`,
+        label: `${year}-${year + 1} 第二学期`
+      }
+    ]
+  }).flat()
+})
 
 const columns: TableColumnsType = [
   { title: '序号', dataIndex: 'Index', key: 'Index', width: 80, fixed: 'left' },
@@ -166,14 +208,24 @@ function getDisplayScore(score: string, gpa: string): string {
   const numGpa = parseFloat(gpa)
   if (isNaN(numGpa)) return score
 
-  // 根据绩点范围推算成绩
-  if (numGpa >= 4.5) return '96-100'
-  if (numGpa >= 4.2) return '90-95'
-  if (numGpa >= 3.8) return '85-89'
-  if (numGpa >= 3.5) return '80-84'
-  if (numGpa >= 2.9) return '75-79'
-  if (numGpa >= 2.5) return '70-74'
-  if (numGpa >= 1.8) return '60-69'
+  // 使用数组存储绩点范围和对应的成绩范围
+  const gpaRanges = [
+    { min: 4.5, score: '96-100' },
+    { min: 4.2, score: '90-95' },
+    { min: 3.8, score: '85-89' },
+    { min: 3.5, score: '80-84' },
+    { min: 2.9, score: '75-79' },
+    { min: 2.5, score: '70-74' },
+    { min: 1.8, score: '60-69' }
+  ]
+
+  // 查找匹配的绩点范围
+  for (const range of gpaRanges) {
+    if (numGpa >= range.min) {
+      return range.score
+    }
+  }
+
   return '<60'
 }
 
@@ -187,6 +239,10 @@ function handleReset() {
 }
 
 onMounted(() => {
+  // 设置当前学期
+  if (!gradesStore.kksj) {
+    gradesStore.kksj = getCurrentSemester()
+  }
   gradesStore.fetchGrades()
 })
 </script>
@@ -438,6 +494,89 @@ onMounted(() => {
   box-shadow: 3px 3px 6px 0 rgba(163,177,198, 0.2), -3px -3px 6px 0 rgba(255,255,255, 0.8);
 }
 
+/* 下拉框新拟态风格 */
+:deep(.ant-select-selector) {
+  background-color: #e0e5ec !important;
+  border: none !important;
+  border-radius: 8px !important;
+  box-shadow: 4px 4px 8px 0 rgba(163,177,198, 0.3), -4px -4px 8px 0 rgba(255,255,255, 0.8) !important;
+  color: #4a5568 !important;
+}
+
+:deep(.ant-select-focused .ant-select-selector) {
+  box-shadow: 4px 4px 8px 0 rgba(163,177,198, 0.3), -4px -4px 8px 0 rgba(255,255,255, 0.8) !important;
+}
+
+:deep(.ant-select-arrow) {
+  color: #4a5568 !important;
+}
+
+/* 下拉菜单新拟态风格 - 全局样式 */
+:global(.neumorphic-select-dropdown) {
+  background-color: #e0e5ec !important;
+  border: none !important;
+  border-radius: 12px !important;
+  box-shadow: 6px 6px 10px 0 rgba(163,177,198, 0.7), -6px -6px 10px 0 rgba(255,255,255, 0.8) !important;
+  padding: 8px !important;
+}
+
+/* 下拉菜单滚动容器 */
+:global(.neumorphic-select-dropdown .rc-virtual-list) {
+  scrollbar-width: thin;
+  scrollbar-color: #a3b1c6 #e0e5ec;
+}
+
+/* Webkit 滚动条样式 */
+:global(.neumorphic-select-dropdown .rc-virtual-list::-webkit-scrollbar) {
+  width: 6px;
+  height: 6px;
+}
+
+:global(.neumorphic-select-dropdown .rc-virtual-list::-webkit-scrollbar-track) {
+  background-color: #e0e5ec;
+  border-radius: 3px;
+  box-shadow: inset 1px 1px 2px 0 rgba(163,177,198, 0.3), inset -1px -1px 2px 0 rgba(255,255,255, 0.8);
+}
+
+:global(.neumorphic-select-dropdown .rc-virtual-list::-webkit-scrollbar-thumb) {
+  background-color: #a3b1c6;
+  border-radius: 3px;
+  box-shadow: 2px 2px 4px 0 rgba(163,177,198, 0.3), -2px -2px 4px 0 rgba(255,255,255, 0.8);
+  transition: all 0.3s ease;
+}
+
+:global(.neumorphic-select-dropdown .rc-virtual-list::-webkit-scrollbar-thumb:hover) {
+  background-color: #8fa3be;
+  box-shadow: 3px 3px 6px 0 rgba(163,177,198, 0.4), -3px -3px 6px 0 rgba(255,255,255, 0.9);
+}
+
+:global(.neumorphic-select-dropdown .ant-select-item) {
+  background-color: transparent !important;
+  color: #4a5568 !important;
+  border-radius: 8px;
+  margin: 4px 0;
+  transition: all 0.3s ease;
+  box-shadow: inset 2px 2px 4px 0 rgba(163,177,198, 0.2), inset -2px -2px 4px 0 rgba(255,255,255, 0.8) !important;
+}
+
+:global(.neumorphic-select-dropdown .ant-select-item-option-selected) {
+  background-color: #409eff !important;
+  color: white !important;
+  box-shadow: 3px 3px 6px 0 rgba(64, 158, 255, 0.3), -3px -3px 6px 0 rgba(150, 200, 255, 0.2) !important;
+}
+
+:global(.neumorphic-select-dropdown .ant-select-item-option-active) {
+  background-color: #dce1e8 !important;
+  color: #4a5568 !important;
+  box-shadow: inset 2px 2px 4px 0 rgba(163,177,198, 0.3), inset -2px -2px 4px 0 rgba(255,255,255, 0.8) !important;
+}
+
+:global(.neumorphic-select-dropdown .ant-select-item-option-selected.ant-select-item-option-active) {
+  background-color: #409eff !important;
+  color: white !important;
+  box-shadow: 3px 3px 6px 0 rgba(64, 158, 255, 0.3), -3px -3px 6px 0 rgba(150, 200, 255, 0.2) !important;
+}
+
 /* 响应式调整 */
 @media (max-width: 768px) {
   .statistic-card {
@@ -460,5 +599,69 @@ onMounted(() => {
   :deep(.filter-form .ant-input) {
     width: 100% !important;
   }
+
+  /* 下拉框响应式适配 */
+  :deep(.filter-form .ant-select) {
+    width: 100% !important;
+  }
+
+  :deep(.ant-select-selector) {
+    min-height: 40px !important;
+    padding: 4px 12px !important;
+  }
+
+  :deep(.ant-select-selection-item) {
+    line-height: 32px !important;
+    font-size: 14px;
+  }
+
+  :deep(.ant-select-dropdown) {
+    max-height: 300px;
+  }
+
+  :deep(.ant-select-item) {
+    padding: 8px 12px;
+    font-size: 14px;
+  }
+}
+
+/* 按钮新拟态风格 */
+.neumorphic-button {
+  background-color: #e0e5ec !important;
+  border: none !important;
+  border-radius: 8px !important;
+  color: #4a5568 !important;
+  font-weight: 500;
+  height: 40px !important;
+  padding: 0 24px !important;
+  box-shadow: 4px 4px 8px 0 rgba(163,177,198, 0.3), -4px -4px 8px 0 rgba(255,255,255, 0.8) !important;
+  transition: all 0.3s ease !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.neumorphic-button:hover {
+  box-shadow: 6px 6px 12px 0 rgba(163,177,198, 0.4), -6px -6px 12px 0 rgba(255,255,255, 0.9) !important;
+  transform: translateY(-2px);
+}
+
+.neumorphic-button:active {
+  box-shadow: inset 2px 2px 4px 0 rgba(163,177,198, 0.3), inset -2px -2px 4px 0 rgba(255,255,255, 0.8) !important;
+  transform: translateY(0);
+}
+
+/* 查询按钮特殊样式 */
+.query-button {
+  color: #409eff !important;
+}
+
+.query-button:hover {
+  color: #66b1ff !important;
+}
+
+/* 重置按钮特殊样式 */
+.reset-button:hover {
+  color: #409eff !important;
 }
 </style>
