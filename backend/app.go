@@ -1,9 +1,12 @@
 package backend
 
 import (
+	"ahut-tool/backend/services"
 	"context"
 	"fmt"
 )
+
+var Instance *services.Service
 
 // App struct
 type App struct {
@@ -19,6 +22,8 @@ func NewApp() *App {
 // so we can call the runtime methods
 func (a *App) Startup(ctx context.Context) {
 	a.ctx = ctx
+	// 初始化Service实例
+	Instance = services.NewService()
 }
 
 // Greet returns a greeting for the given name

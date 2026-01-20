@@ -14,11 +14,7 @@ func (s *Service) GetLoginFormData(userId string, password string) map[string]st
 	return FormData
 }
 
-func (s *Service) GetToken(formData map[string]string) string {
-	cookie, err := s.getCookie(formData)
-	if err != nil {
-		println(err)
-		return ""
-	}
-	return cookie
+func (s *Service) GetToken(formData map[string]string) int {
+	status, _ := s.sendLoginRequest(formData)
+	return status
 }
