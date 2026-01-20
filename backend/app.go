@@ -1,12 +1,12 @@
 package backend
 
 import (
-	"ahut-tool/backend/services"
+	"ahut-tool/backend/jwxt"
 	"context"
 	"fmt"
 )
 
-var Instance *services.Service
+var Instance *jwxt.Service
 
 // App struct
 type App struct {
@@ -23,7 +23,7 @@ func NewApp() *App {
 func (a *App) Startup(ctx context.Context) {
 	a.ctx = ctx
 	// 初始化Service实例
-	Instance = services.NewService()
+	Instance = jwxt.NewService()
 }
 
 // Greet returns a greeting for the given name

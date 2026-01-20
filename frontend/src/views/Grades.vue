@@ -1,59 +1,55 @@
 <template>
-  <div class="grades-container">
-    <a-card title="成绩查询" :bordered="false">
-      <!-- 成绩汇总 -->
-      <a-row :gutter="16" class="summary-row">
-        <a-col :span="6">
-          <a-statistic
-            title="所修门数"
-            :value="gradesStore.summary.CourseCount || 0"
-            :value-style="{ color: '#3f8600' }"
-          >
-            <template #prefix>
-              <BookOutlined />
-            </template>
-          </a-statistic>
-        </a-col>
-        <a-col :span="6">
-          <a-statistic
-            title="所修总学分"
-            :value="gradesStore.summary.TotalCredit || 0"
-            :value-style="{ color: '#3f8600' }"
-          >
-            <template #prefix>
-              <TrophyOutlined />
-            </template>
-          </a-statistic>
-        </a-col>
-        <a-col :span="6">
-          <a-statistic
-            title="平均学分绩点"
-            :value="gradesStore.summary.AvgGPA || 0"
-            :precision="2"
-            :value-style="{ color: '#1890ff' }"
-          >
-            <template #prefix>
-              <RiseOutlined />
-            </template>
-          </a-statistic>
-        </a-col>
-        <a-col :span="6">
-          <a-statistic
-            title="平均成绩"
-            :value="gradesStore.summary.AvgScore || 0"
-            :precision="2"
-            :value-style="{ color: '#1890ff' }"
-          >
-            <template #prefix>
-              <LineChartOutlined />
-            </template>
-          </a-statistic>
-        </a-col>
-      </a-row>
+  <div class="grades-page">
+    <!-- 成绩汇总 -->
+    <a-row :gutter="[24, 24]" class="summary-row">
+      <a-col :xs="24" :sm="12" :md="6" :lg="6" :xl="6">
+        <div class="statistic-card">
+          <div class="statistic-icon">
+            <BookOutlined />
+          </div>
+          <div class="statistic-content">
+            <div class="statistic-title">所修门数</div>
+            <div class="statistic-value">{{ gradesStore.summary.CourseCount || 0 }}</div>
+          </div>
+        </div>
+      </a-col>
+      <a-col :xs="24" :sm="12" :md="6" :lg="6" :xl="6">
+        <div class="statistic-card">
+          <div class="statistic-icon">
+            <TrophyOutlined />
+          </div>
+          <div class="statistic-content">
+            <div class="statistic-title">所修总学分</div>
+            <div class="statistic-value">{{ gradesStore.summary.TotalCredit || 0 }}</div>
+          </div>
+        </div>
+      </a-col>
+      <a-col :xs="24" :sm="12" :md="6" :lg="6" :xl="6">
+        <div class="statistic-card">
+          <div class="statistic-icon">
+            <RiseOutlined />
+          </div>
+          <div class="statistic-content">
+            <div class="statistic-title">平均学分绩点</div>
+            <div class="statistic-value">{{ gradesStore.summary.AvgGPA || 0 }}</div>
+          </div>
+        </div>
+      </a-col>
+      <a-col :xs="24" :sm="12" :md="6" :lg="6" :xl="6">
+        <div class="statistic-card">
+          <div class="statistic-icon">
+            <LineChartOutlined />
+          </div>
+          <div class="statistic-content">
+            <div class="statistic-title">平均成绩</div>
+            <div class="statistic-value">{{ gradesStore.summary.AvgScore || 0 }}</div>
+          </div>
+        </div>
+      </a-col>
+    </a-row>
 
-      <!-- 查询条件 -->
-      <a-divider />
-
+    <!-- 查询条件 -->
+    <div class="filter-section">
       <a-form layout="inline" class="filter-form">
         <a-form-item label="开课学期">
           <a-input
@@ -98,17 +94,16 @@
           </a-space>
         </a-form-item>
       </a-form>
+    </div>
 
-      <!-- 成绩表格 -->
-      <a-divider />
-
+    <!-- 成绩表格 -->
+    <div class="table-section">
       <a-table
         :columns="columns"
         :data-source="gradesStore.grades"
         :loading="gradesStore.loading"
         :scroll="{ x: 'max-content' }"
         :pagination="{ pageSize: 10 }"
-        bordered
         size="middle"
       >
         <template #bodyCell="{ column, record }">
@@ -119,7 +114,7 @@
           </template>
         </template>
       </a-table>
-    </a-card>
+    </div>
   </div>
 </template>
 
@@ -175,36 +170,327 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.grades-container {
-  width: 100%;
+.grades-page {
+  padding: 24px;
+  background-color: #e0e5ec;
+  min-height: calc(100vh - 48px);
 }
 
 .summary-row {
   margin-bottom: 24px;
 }
 
-.filter-form {
-  margin-bottom: 24px;
+.statistic-card {
+  background-color: #e0e5ec;
+  border-radius: 16px;
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  box-shadow: 6px 6px 10px 0 rgba(163,177,198, 0.7), -6px -6px 10px 0 rgba(255,255,255, 0.8);
+  height: 100%;
+  min-height: 80px;
 }
 
-/* 自定义表格样式 */
-:deep(.ant-table-wrapper) {
-  width: 100%;
+.statistic-icon {
+  font-size: 1.8rem;
+  margin-right: 16px;
+  color: #4a5568;
+}
+
+.statistic-content {
+  flex: 1;
+}
+
+.statistic-title {
+  font-size: 0.9rem;
+  color: #718096;
+  margin-bottom: 4px;
+}
+
+.statistic-value {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #4a5568;
+}
+
+.filter-section {
+  background-color: #e0e5ec;
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 24px;
+  box-shadow: 6px 6px 10px 0 rgba(163,177,198, 0.7), -6px -6px 10px 0 rgba(255,255,255, 0.8);
+}
+
+.filter-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: center;
+}
+
+:deep(.filter-form .ant-form-item) {
+  margin-bottom: 0;
+}
+
+:deep(.filter-form .ant-form-item-label > label) {
+  color: #4a5568 !important;
+  padding-right: 8px;
+  font-weight: 500;
+}
+
+:deep(.ant-form-item) {
+  margin-bottom: 16px;
+}
+
+:deep(.ant-form-item-label) {
+  padding-bottom: 4px;
+}
+
+:deep(.filter-form .ant-input) {
+  background-color: transparent !important;
+  box-shadow: none !important;
+  border: none !important;
+  padding: 4px 0 !important;
+  color: #4a5568 !important;
+  transition: all 0.3s;
+}
+
+:deep(.filter-form .ant-input:hover) {
+  background-color: transparent !important;
+}
+
+:deep(.filter-form .ant-input:focus) {
+  background-color: transparent !important;
+  outline: none !important;
+  border: none !important;
+}
+
+:deep(.ant-input-affix-wrapper) {
+  background-color: #e0e5ec !important;
+  box-shadow: inset 4px 4px 8px 0 rgba(163,177,198, 0.3), inset -4px -4px 8px 0 rgba(255,255,255, 0.8) !important;
+  border: none !important;
+  border-radius: 12px !important;
+  color: #4a5568 !important;
+  padding: 4px 12px !important;
+}
+
+:deep(.ant-input-affix-wrapper:hover) {
+  box-shadow: inset 4px 4px 8px 0 rgba(163,177,198, 0.4), inset -4px -4px 8px 0 rgba(255,255,255, 0.9) !important;
+}
+
+:deep(.ant-input-affix-wrapper-focused) {
+  box-shadow: inset 4px 4px 8px 0 rgba(163,177,198, 0.5), inset -4px -4px 8px 0 rgba(255,255,255, 1) !important;
+  outline: none !important;
+  border: none !important;
+}
+
+:deep(.ant-input-affix-wrapper input) {
+  background-color: transparent !important;
+  box-shadow: none !important;
+  border: none !important;
+  padding: 4px 0 !important;
+}
+
+:deep(.ant-input-affix-wrapper .ant-input) {
+  background-color: transparent !important;
+  box-shadow: none !important;
+  border: none !important;
+}
+
+:deep(.ant-btn) {
+  background-color: #e0e5ec !important;
+  border: none !important;
+  box-shadow: 6px 6px 10px 0 rgba(163,177,198, 0.7), -6px -6px 10px 0 rgba(255,255,255, 0.8) !important;
+  border-radius: 12px !important;
+  color: #4a5568 !important;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  padding: 8px 16px;
+}
+
+:deep(.ant-btn-primary) {
+  background-color: #409eff !important;
+  color: white !important;
+  box-shadow: 6px 6px 10px 0 rgba(64, 158, 255, 0.3), -6px -6px 10px 0 rgba(150, 200, 255, 0.2) !important;
+}
+
+:deep(.ant-btn:hover) {
+  box-shadow: 4px 4px 8px 0 rgba(163,177,198, 0.7), -4px -4px 8px 0 rgba(255,255,255, 0.8) !important;
+}
+
+:deep(.ant-btn-primary:hover) {
+  box-shadow: 4px 4px 8px 0 rgba(64, 158, 255, 0.3), -4px -4px 8px 0 rgba(150, 200, 255, 0.2) !important;
+}
+
+:deep(.ant-btn:active) {
+  box-shadow: inset 4px 4px 8px 0 rgba(163,177,198, 0.7), inset -4px -4px 8px 0 rgba(255,255,255, 0.8) !important;
+}
+
+:deep(.ant-btn-primary:active) {
+  box-shadow: inset 4px 4px 8px 0 rgba(64, 158, 255, 0.3), inset -4px -4px 8px 0 rgba(150, 200, 255, 0.2) !important;
+}
+
+:deep(.ant-input-clear-icon) {
+  color: #a0aec0 !important;
+  transition: all 0.3s;
+}
+
+:deep(.ant-input-clear-icon:hover) {
+  color: #4a5568 !important;
+}
+
+.table-section {
+  background-color: #e0e5ec;
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 6px 6px 10px 0 rgba(163,177,198, 0.7), -6px -6px 10px 0 rgba(255,255,255, 0.8);
 }
 
 :deep(.ant-table) {
-  width: 100%;
+  background-color: #e0e5ec;
+  border-radius: 12px;
 }
 
-:deep(.ant-table-container) {
-  width: 100%;
+:deep(.ant-table-wrapper) {
+  border-radius: 12px;
 }
 
 :deep(.ant-table-thead > tr > th) {
-  white-space: nowrap;
+  background-color: #e0e5ec !important;
+  color: #4a5568 !important;
+  font-weight: 600;
+  text-align: center;
+  box-shadow: inset 4px 4px 8px 0 rgba(163,177,198, 0.3), inset -4px -4px 8px 0 rgba(255,255,255, 0.8) !important;
+  border-color: #e0e5ec !important;
+  border: none !important;
+  padding: 16px !important;
+}
+
+:deep(.ant-table-thead > tr > th:first-child) {
+  border-top-left-radius: 12px;
+  border-bottom-left-radius: 12px;
+}
+
+:deep(.ant-table-thead > tr > th:last-child) {
+  border-top-right-radius: 12px;
+  border-bottom-right-radius: 12px;
 }
 
 :deep(.ant-table-tbody > tr > td) {
-  white-space: nowrap;
+  text-align: center;
+  background-color: #e0e5ec;
+  border-color: #e0e5ec;
+  color: #4a5568;
+  border: none;
+  padding: 12px 16px;
+  transition: all 0.3s ease;
+}
+
+:deep(.ant-table-tbody > tr:hover > td) {
+  background-color: #e0e5ec !important;
+}
+
+:deep(.ant-table-tbody > tr > td:first-child) {
+  border-top-left-radius: 8px;
+  border-bottom-left-radius: 8px;
+}
+
+:deep(.ant-table-tbody > tr > td:last-child) {
+  border-top-right-radius: 8px;
+  border-bottom-right-radius: 8px;
+}
+
+:deep(.ant-table-pagination.ant-pagination) {
+  margin: 24px 0 0 0;
+  text-align: center;
+}
+
+:deep(.ant-pagination-item) {
+  background-color: #e0e5ec;
+  border: none;
+  border-radius: 8px;
+  box-shadow: 4px 4px 8px 0 rgba(163,177,198, 0.3), -4px -4px 8px 0 rgba(255,255,255, 0.8);
+  color: #4a5568;
+  transition: all 0.3s ease;
+}
+
+:deep(.ant-pagination-item:hover) {
+  box-shadow: 3px 3px 6px 0 rgba(163,177,198, 0.4), -3px -3px 6px 0 rgba(255,255,255, 0.9);
+}
+
+:deep(.ant-pagination-item-active) {
+  background-color: #409eff;
+  color: white;
+  box-shadow: 4px 4px 8px 0 rgba(64, 158, 255, 0.3), -4px -4px 8px 0 rgba(150, 200, 255, 0.2);
+}
+
+:deep(.ant-pagination-prev),
+:deep(.ant-pagination-next) {
+  background-color: #e0e5ec;
+  border: none;
+  border-radius: 8px;
+  box-shadow: 4px 4px 8px 0 rgba(163,177,198, 0.3), -4px -4px 8px 0 rgba(255,255,255, 0.8);
+  color: #4a5568;
+  transition: all 0.3s ease;
+}
+
+:deep(.ant-pagination-prev:hover),
+:deep(.ant-pagination-next:hover) {
+  box-shadow: 3px 3px 6px 0 rgba(163,177,198, 0.4), -3px -3px 6px 0 rgba(255,255,255, 0.9);
+}
+
+:deep(.ant-pagination-disabled) {
+  box-shadow: inset 3px 3px 6px 0 rgba(163,177,198, 0.3), inset -3px -3px 6px 0 rgba(255,255,255, 0.8);
+  color: #a0aec0;
+}
+
+:deep(.ant-tag) {
+  border: none;
+  font-weight: 500;
+  border-radius: 8px;
+  padding: 4px 12px;
+  box-shadow: 3px 3px 6px 0 rgba(163,177,198, 0.2), -3px -3px 6px 0 rgba(255,255,255, 0.8);
+}
+
+:deep(.ant-spin-container) {
+  border-radius: 12px;
+}
+
+:deep(.ant-table-container) {
+  border-radius: 12px;
+}
+
+:deep(.ant-table-wrapper) {
+  padding: 8px;
+}
+
+:deep(.ant-table-body) {
+  margin: 8px;
+  border-radius: 12px;
+  box-shadow: inset 4px 4px 8px 0 rgba(163,177,198, 0.15), inset -4px -4px 8px 0 rgba(255,255,255, 0.8);
+}
+
+/* 响应式调整 */
+@media (max-width: 768px) {
+  .statistic-card {
+    margin-bottom: 16px;
+  }
+  
+  .filter-form {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  :deep(.filter-form .ant-form-item) {
+    margin-bottom: 16px;
+  }
+  
+  :deep(.filter-form .ant-form-item-control-wrapper) {
+    display: flex;
+  }
+  
+  :deep(.filter-form .ant-input) {
+    width: 100% !important;
+  }
 }
 </style>

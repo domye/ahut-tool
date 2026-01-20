@@ -1,4 +1,4 @@
-package services
+package jwxt
 
 import (
 	"github.com/go-resty/resty/v2"
