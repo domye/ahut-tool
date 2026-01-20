@@ -2,11 +2,10 @@ module ahut-tool
 
 go 1.24.0
 
-toolchain go1.24.12
+require github.com/go-resty/resty/v2 v2.7.0
 
 require (
 	github.com/PuerkitoBio/goquery v1.11.0
-	github.com/go-resty/resty/v2 v2.17.1
 	github.com/wailsapp/wails/v2 v2.11.0
 )
 
