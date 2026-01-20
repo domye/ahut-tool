@@ -103,13 +103,13 @@
         :data-source="gradesStore.grades"
         :loading="gradesStore.loading"
         :scroll="{ x: 'max-content' }"
-        :pagination="{ pageSize: 10 }"
+        :pagination="{ pageSize: 20}"
         size="middle"
       >
         <template #bodyCell="{ column, record }">
           <template v-if="column.key === 'score'">
-            <a-tag :color="getScoreColor(record.Score)">
-              {{ record.Score }}
+            <a-tag :color="getScoreColor(getDisplayScore(record.Score, record.GPA))">
+              {{ getDisplayScore(record.Score, record.GPA) }}
             </a-tag>
           </template>
         </template>
@@ -129,20 +129,20 @@ const gradesStore = useGradesStore()
 const columns: TableColumnsType = [
   { title: '序号', dataIndex: 'Index', key: 'Index', width: 80, fixed: 'left' },
   { title: '开课学期', dataIndex: 'Semester', key: 'Semester', width: 120 },
-  { title: '课程编号', dataIndex: 'CourseID', key: 'CourseID', width: 150 },
-  { title: '课程名称', dataIndex: 'CourseName', key: 'CourseName', width: 200 },
-  { title: '分组名', dataIndex: 'GroupName', key: 'GroupName', width: 150 },
+  // { title: '课程编号', dataIndex: 'CourseID', key: 'CourseID', width: 150 },
+  { title: '课程名称', dataIndex: 'CourseName', key: 'CourseName', width: 150 },
+  // { title: '分组名', dataIndex: 'GroupName', key: 'GroupName', width: 150 },
   { title: '成绩', dataIndex: 'Score', key: 'score', width: 100 },
-  { title: '成绩标识', dataIndex: 'ScoreFlag', key: 'ScoreFlag', width: 100 },
-  { title: '学分', dataIndex: 'Credit', key: 'Credit', width: 80 },
-  { title: '总学时', dataIndex: 'TotalHours', key: 'TotalHours', width: 100 },
-  { title: '绩点', dataIndex: 'GPA', key: 'GPA', width: 80 },
-  { title: '补重学期', dataIndex: 'RetakeSem', key: 'RetakeSem', width: 120 },
-  { title: '考核方式', dataIndex: 'ExamMode', key: 'ExamMode', width: 100 },
-  { title: '考试性质', dataIndex: 'ExamType', key: 'ExamType', width: 100 },
-  { title: '课程属性', dataIndex: 'CourseAttr', key: 'CourseAttr', width: 100 },
+  // { title: '成绩标识', dataIndex: 'ScoreFlag', key: 'ScoreFlag', width: 100 },
+  // { title: '学分', dataIndex: 'Credit', key: 'Credit', width: 80 },
+  // { title: '总学时', dataIndex: 'TotalHours', key: 'TotalHours', width: 100 },
+  // { title: '绩点', dataIndex: 'GPA', key: 'GPA', width: 80 },
+  // { title: '补重学期', dataIndex: 'RetakeSem', key: 'RetakeSem', width: 120 },
+  // { title: '考核方式', dataIndex: 'ExamMode', key: 'ExamMode', width: 100 },
+  // { title: '考试性质', dataIndex: 'ExamType', key: 'ExamType', width: 100 },
+  // { title: '课程属性', dataIndex: 'CourseAttr', key: 'CourseAttr', width: 100 },
   { title: '课程性质', dataIndex: 'CourseNature', key: 'CourseNature', width: 100 },
-  { title: '通选课类别', dataIndex: 'GEType', key: 'GEType', width: 120 }
+  // { title: '通选课类别', dataIndex: 'GEType', key: 'GEType', width: 120 }
 ]
 
 function getScoreColor(score: string): string {
@@ -153,6 +153,28 @@ function getScoreColor(score: string): string {
   if (numScore >= 70) return 'orange'
   if (numScore >= 60) return 'gold'
   return 'red'
+}
+
+// 根据绩点推算成绩
+function getDisplayScore(score: string, gpa: string): string {
+  // 如果成绩不是"未评教"，直接返回原成绩
+  if (score !== '未评教') {
+    return score
+  }
+
+  // 如果成绩是"未评教"，根据绩点推算成绩
+  const numGpa = parseFloat(gpa)
+  if (isNaN(numGpa)) return score
+
+  // 根据绩点范围推算成绩
+  if (numGpa >= 4.5) return '96-100'
+  if (numGpa >= 4.2) return '90-95'
+  if (numGpa >= 3.8) return '85-89'
+  if (numGpa >= 3.5) return '80-84'
+  if (numGpa >= 2.9) return '75-79'
+  if (numGpa >= 2.5) return '70-74'
+  if (numGpa >= 1.8) return '60-69'
+  return '<60'
 }
 
 async function handleSearch() {
@@ -346,128 +368,74 @@ onMounted(() => {
   box-shadow: 6px 6px 10px 0 rgba(163,177,198, 0.7), -6px -6px 10px 0 rgba(255,255,255, 0.8);
 }
 
-:deep(.ant-table) {
-  background-color: #e0e5ec;
-  border-radius: 12px;
-}
-
-:deep(.ant-table-wrapper) {
-  border-radius: 12px;
-}
-
+/* 表格头部 */
 :deep(.ant-table-thead > tr > th) {
   background-color: #e0e5ec !important;
   color: #4a5568 !important;
   font-weight: 600;
   text-align: center;
-  box-shadow: inset 4px 4px 8px 0 rgba(163,177,198, 0.3), inset -4px -4px 8px 0 rgba(255,255,255, 0.8) !important;
-  border-color: #e0e5ec !important;
-  border: none !important;
-  padding: 16px !important;
+  border-bottom: 2px solid rgba(163,177,198, 0.4) !important;
+  padding: 14px 12px !important;
 }
 
-:deep(.ant-table-thead > tr > th:first-child) {
-  border-top-left-radius: 12px;
-  border-bottom-left-radius: 12px;
-}
-
-:deep(.ant-table-thead > tr > th:last-child) {
-  border-top-right-radius: 12px;
-  border-bottom-right-radius: 12px;
-}
-
+/* 表格单元格 */
 :deep(.ant-table-tbody > tr > td) {
   text-align: center;
-  background-color: #e0e5ec;
-  border-color: #e0e5ec;
-  color: #4a5568;
-  border: none;
-  padding: 12px 16px;
-  transition: all 0.3s ease;
-}
-
-:deep(.ant-table-tbody > tr:hover > td) {
   background-color: #e0e5ec !important;
+  border-bottom: 1px solid rgba(163,177,198, 0.3) !important;
+  color: #4a5568 !important;
+  padding: 12px !important;
 }
 
-:deep(.ant-table-tbody > tr > td:first-child) {
-  border-top-left-radius: 8px;
-  border-bottom-left-radius: 8px;
+/* 表格行悬停效果 */
+:deep(.ant-table-tbody > tr:hover > td) {
+  background-color: #dce1e8 !important;
 }
 
-:deep(.ant-table-tbody > tr > td:last-child) {
-  border-top-right-radius: 8px;
-  border-bottom-right-radius: 8px;
-}
-
-:deep(.ant-table-pagination.ant-pagination) {
+/* 分页样式 */
+:deep(.ant-pagination) {
   margin: 24px 0 0 0;
-  text-align: center;
+  gap: 12px !important;
 }
 
 :deep(.ant-pagination-item) {
-  background-color: #e0e5ec;
-  border: none;
-  border-radius: 8px;
-  box-shadow: 4px 4px 8px 0 rgba(163,177,198, 0.3), -4px -4px 8px 0 rgba(255,255,255, 0.8);
-  color: #4a5568;
+  background-color: #e0e5ec !important;
+  border: none !important;
+  border-radius: 8px !important;
+  box-shadow: 4px 4px 8px 0 rgba(163,177,198, 0.3), -4px -4px 8px 0 rgba(255,255,255, 0.8) !important;
+  color: #4a5568 !important;
   transition: all 0.3s ease;
-}
-
-:deep(.ant-pagination-item:hover) {
-  box-shadow: 3px 3px 6px 0 rgba(163,177,198, 0.4), -3px -3px 6px 0 rgba(255,255,255, 0.9);
+  margin: 0 4px !important;
+  min-width: 20px !important;
+  height: 20px !important;
+  line-height: 20px !important;
 }
 
 :deep(.ant-pagination-item-active) {
-  background-color: #409eff;
-  color: white;
-  box-shadow: 4px 4px 8px 0 rgba(64, 158, 255, 0.3), -4px -4px 8px 0 rgba(150, 200, 255, 0.2);
+  background-color: #409eff !important;
+  color: white !important;
+  box-shadow: 4px 4px 8px 0 rgba(64, 158, 255, 0.3), -4px -4px 8px 0 rgba(150, 200, 255, 0.2) !important;
 }
 
 :deep(.ant-pagination-prev),
 :deep(.ant-pagination-next) {
-  background-color: #e0e5ec;
-  border: none;
-  border-radius: 8px;
-  box-shadow: 4px 4px 8px 0 rgba(163,177,198, 0.3), -4px -4px 8px 0 rgba(255,255,255, 0.8);
-  color: #4a5568;
-  transition: all 0.3s ease;
+  background-color: #e0e5ec !important;
+  border: none !important;
+  border-radius: 8px !important;
+  box-shadow: 4px 4px 8px 0 rgba(163,177,198, 0.3), -4px -4px 8px 0 rgba(255,255,255, 0.8) !important;
+  color: #4a5568 !important;
+  min-width: 20px !important;
+  height: 20px !important;
+  line-height: 20px !important;
 }
 
-:deep(.ant-pagination-prev:hover),
-:deep(.ant-pagination-next:hover) {
-  box-shadow: 3px 3px 6px 0 rgba(163,177,198, 0.4), -3px -3px 6px 0 rgba(255,255,255, 0.9);
-}
-
-:deep(.ant-pagination-disabled) {
-  box-shadow: inset 3px 3px 6px 0 rgba(163,177,198, 0.3), inset -3px -3px 6px 0 rgba(255,255,255, 0.8);
-  color: #a0aec0;
-}
-
+/* 标签样式 */
 :deep(.ant-tag) {
-  border: none;
+  border: none !important;
   font-weight: 500;
   border-radius: 8px;
   padding: 4px 12px;
   box-shadow: 3px 3px 6px 0 rgba(163,177,198, 0.2), -3px -3px 6px 0 rgba(255,255,255, 0.8);
-}
-
-:deep(.ant-spin-container) {
-  border-radius: 12px;
-}
-
-:deep(.ant-table-container) {
-  border-radius: 12px;
-}
-
-:deep(.ant-table-wrapper) {
-  padding: 8px;
-}
-
-:deep(.ant-table-body) {
-  margin: 8px;
-  border-radius: 12px;
-  box-shadow: inset 4px 4px 8px 0 rgba(163,177,198, 0.15), inset -4px -4px 8px 0 rgba(255,255,255, 0.8);
 }
 
 /* 响应式调整 */
