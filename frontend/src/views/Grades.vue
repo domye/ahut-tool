@@ -143,6 +143,20 @@ import type { TableColumnsType } from 'ant-design-vue'
 const gradesStore = useGradesStore()
 
 // 获取当前学期
+function getCurrentSemester(): string {
+  const currentDate = new Date()
+  const currentYear = currentDate.getFullYear()
+  const currentMonth = currentDate.getMonth() + 1 // 1-12
+
+  // 确定基准年份：3月及以后使用当前年份，否则使用上一年份
+  const baseYear = currentMonth >= 3 ? currentYear : currentYear - 1
+
+  // 9月到次年3月为第一学期，3月到9月为第二学期
+  const semester = currentMonth >= 3 && currentMonth < 9 ? '2' : '1'
+
+  return `${baseYear}-${baseYear + 1}-${semester}`
+}
+
 // 计算学期选项
 const semesterOptions = computed(() => {
   const currentDate = new Date()
