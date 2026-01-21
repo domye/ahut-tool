@@ -27,7 +27,7 @@ const router = useRouter()
 const tools = [
   { id: 'grades', name: '成绩查询', icon: '📊', status: 'ready' },
   { id: 'electricity', name: '电费查询', icon: '⚡', status: 'ready' },
-  { id: 'schedule', name: '课程表', icon: '📅', status: 'dev' },
+  { id: 'schedule', name: '课程表', icon: '📅', status: 'ready' },
   { id: 'library', name: '图书馆', icon: '📚', status: 'dev' },
   { id: 'campus', name: '校园地图', icon: '🗺️', status: 'dev' },
   { id: 'dining', name: '食堂查询', icon: '🍽️', status: 'dev' },
@@ -41,6 +41,8 @@ function handleToolClick(tool: any) {
     router.push('/main/grades')
   } else if (tool.status === 'ready' && tool.id === 'electricity') {
     router.push('/main/electricity')
+  } else if (tool.status === 'ready' && tool.id === 'schedule') {
+    router.push('/main/schedule')
   } else {
     router.push('/main/coming-soon')
   }
