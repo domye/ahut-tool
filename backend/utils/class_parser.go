@@ -124,82 +124,54 @@ func extractPeriod(periodText string) string {
 func parseDetailedClassInfo(contentHtml string, dayOfWeek int, period string) models.Class {
 	var classInfo models.Class
 
-	// 创建文档用于解析HTML内容
-	doc, err := goquery.NewDocumentFromReader(strings.NewReader("<div>" + contentHtml + "</div>"))
-	if err != nil {
-		return classInfo
-	}
+	// 处理换行符和空格
+	content := strings.ReplaceAll(contentHtml, "<br/>", "<br>")
+	content = strings.ReplaceAll(content, "<br />", "<br>")
+	content = strings.ReplaceAll(content, "<br >", "<br>")
+	content = strings.ReplaceAll(content, "", "")
+	content = strings.ReplaceAll(content, "", "")
+	content = strings.ReplaceAll(content, "	", "")
 
-	// 提取所有文本节点和带title属性的font标签内容
-	var lines []string
+	// 使用正则表达式提取font标签及其内容
+	fontRe := regexp.MustCompile(`(?i)<font[^>]*title\s*=\s*['"]([^'"]*)['"][^>]*>(.*?)</font>`)
+	fontMatches := fontRe.FindAllStringSubmatch(content, -1)
 
-	// 遍历div中的所有直接子元素和文本节点
-	doc.Find("div").Children().Each(func(i int, s *goquery.Selection) {
-		tagName := goquery.NodeName(s)
-		if tagName == "font" {
-			title, _ := s.Attr("title")
-			text := s.Text()
-			if title != "" {
-				lines = append(lines, fmt.Sprintf("%s: %s", title, text))
-			} else {
-				if text != "" && text != "&nbsp;" {
-					lines = append(lines, text)
-				}
-			}
-		} else {
-			text := s.Text()
-			if text != "" && text != "&nbsp;" {
-				lines = append(lines, text)
-			}
-		}
-	})
-
-	// 如果Children没捕获到，尝试直接获取所有内容
-	if len(lines) == 0 {
-		content := doc.Text()
-		content = strings.ReplaceAll(contentHtml, "<br/>", "<br>")
-		content = strings.ReplaceAll(content, "<br />", "<br>")
-		content = strings.ReplaceAll(content, "<br >", "<br>")
-		parts := strings.Split(content, "<br>")
-
-		for _, part := range parts {
-			cleanPart := cleanText(part)
-			if cleanPart != "" && cleanPart != "&nbsp;" {
-				lines = append(lines, cleanPart)
-			}
+	// 创建一个map来存储title和对应的text
+	infoMap := make(map[string]string)
+	for _, match := range fontMatches {
+		if len(match) >= 3 {
+			title := match[1]
+			text := match[2]
+			infoMap[title] = text
+			// 从原始内容中移除已处理的font标签
+			content = strings.Replace(content, match[0], "", 1)
 		}
 	}
 
-	// 解析提取到的行
+	// 处理剩余内容，提取课程名称
+	parts := strings.Split(content, "<br>")
 	className := ""
-	for _, line := range lines {
-		line = cleanText(line)
-		if line == "" || line == "&nbsp;" {
-			continue
-		}
-
-		// 检查是否包含教师信息
-		if strings.Contains(line, "老师:") || strings.Contains(line, "老师：") || strings.HasPrefix(line, "老师") {
-			classInfo.Teacher = extractValueFromLine(line)
-		} else if strings.Contains(line, "教室:") || strings.Contains(line, "教室：") || strings.HasPrefix(line, "教室") {
-			classInfo.Classroom = extractValueFromLine(line)
-		} else if strings.Contains(line, "周次") || strings.Contains(line, "周(") {
-			classInfo.WeekNumbers = extractWeekNumbers(line)
-		} else if className == "" {
-			// 如果还没设置课程名称，这可能是课程名称
-			className = line
+	for _, part := range parts {
+		cleanPart := cleanText(part)
+		if cleanPart != "" && cleanPart != "&nbsp;" {
+			className = cleanPart
+			break
 		}
 	}
 
-	// 如果仍然没有课程名称，使用第一个非空行作为课程名称
-	if className == "" && len(lines) > 0 {
-		for _, line := range lines {
-			cleanLine := cleanText(line)
-			if cleanLine != "" && cleanLine != "&nbsp;" &&
-				!strings.Contains(cleanLine, "老师:") && !strings.Contains(cleanLine, "教室:") && !strings.Contains(cleanLine, "周次") {
-				className = cleanLine
-				break
-			}
+	// 从infoMap中提取教师和教室信息
+	if teacher, ok := infoMap["老师"]; ok {
+		classInfo.Teacher = cleanText(teacher)
+	}
+	if classroom, ok := infoMap["教室"]; ok {
+		classInfo.Classroom = cleanText(classroom)
+	}
+
+	// 提取周次信息
+	for key, value := range infoMap {
+		if strings.Contains(key, "周次") || strings.Contains(key, "周(") {
+			classInfo.WeekNumbers = extractWeekNumbers(fmt.Sprintf("%s: %s", key, value))
+			break
 		}
 	}
 
