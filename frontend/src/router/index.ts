@@ -4,13 +4,13 @@ import type { RouteRecordRaw } from 'vue-router'
 const routes: Array<RouteRecordRaw> = [
   {
     path: '/',
-    redirect: '/login'
+    redirect: '/main/home'
   },
-  {
-    path: '/login',
-    name: 'Login',
-    component: () => import('../views/Login.vue')
-  },
+  // {
+  //   path: '/login',
+  //   name: 'Login',
+  //   component: () => import('../views/Login.vue')
+  // },
   {
     path: '/main',
     name: 'Main',
@@ -52,14 +52,8 @@ const router = createRouter({
 
 // 路由守卫
 router.beforeEach((to, from, next) => {
-  const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true'
-  if (to.path !== '/login' && !isLoggedIn) {
-    next('/login')
-  } else if (to.path === '/login' && isLoggedIn) {
-    next('/main/home')
-  } else {
-    next()
-  }
+  // 由于应用启动时会自动登录，所以不再需要登录检查
+  next()
 })
 
 export default router

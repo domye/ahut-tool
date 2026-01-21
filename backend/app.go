@@ -1,6 +1,7 @@
 package backend
 
 import (
+	"ahut-tool/backend/config"
 	"ahut-tool/backend/jwxt"
 	"ahut-tool/backend/pay"
 	"context"
@@ -8,6 +9,7 @@ import (
 
 var JwxtInstance *jwxt.Service
 var PayInstance *pay.Service
+var ConfigInstance *config.Service
 
 // App struct
 type App struct {
@@ -26,4 +28,5 @@ func (a *App) Startup(ctx context.Context) {
 	// 初始化Service实例
 	JwxtInstance = jwxt.NewService()
 	PayInstance = pay.NewService()
+	ConfigInstance = config.NewService()
 }

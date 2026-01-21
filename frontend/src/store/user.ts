@@ -7,24 +7,14 @@ export const useUserStore = defineStore('user', () => {
   const userId = ref('')
   const message = ref('')
 
-  function login(id: string, password: string): Promise<void> {
+  function login(): Promise<void> {
     return new Promise((resolve, reject) => {
-      if (!id || !password) {
-        message.value = '请输入学号和密码'
-        reject(new Error('请输入学号和密码'))
-        return
-      }
-
       message.value = '登录中...'
-      JwxtLogin(id, password)
+      JwxtLogin()
         .then((result: number) => {
           console.log(result)
           if (result === 302) {
             message.value = '登录成功'
-            isLoggedIn.value = true
-            userId.value = id
-            localStorage.setItem('isLoggedIn', 'true')
-            localStorage.setItem('userId', id)
             resolve()
           } else {
             message.value = '登录失败，请检查学号和密码'
@@ -41,8 +31,6 @@ export const useUserStore = defineStore('user', () => {
   function logout() {
     isLoggedIn.value = false
     userId.value = ''
-    localStorage.removeItem('isLoggedIn')
-    localStorage.removeItem('userId')
   }
 
   return {

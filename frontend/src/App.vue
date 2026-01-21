@@ -1,5 +1,17 @@
 <script setup lang="ts">
-// App.vue
+import { onMounted } from 'vue'
+import { useUserStore } from './store/user'
+
+const userStore = useUserStore()
+
+// 在应用挂载时自动登录
+onMounted(async () => {
+  try {
+    await userStore.login()
+  } catch (error) {
+    console.error('自动登录失败:', error)
+  }
+})
 </script>
 
 <template>

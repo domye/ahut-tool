@@ -4,11 +4,11 @@
     <div class="main-content">
       <div class="header">
         <div class="user-info">
-          <span>欢迎，{{ userStore.userId }}</span>
+          <span>欢迎使用</span>
         </div>
         <button class="logout-btn" @click="handleLogout">
           <span class="logout-icon">🚪</span>
-          <span class="logout-text">退出登录</span>
+          <span class="logout-text">重新登录</span>
         </button>
       </div>
       <div class="content">
@@ -27,8 +27,7 @@ const router = useRouter()
 const userStore = useUserStore()
 
 function handleLogout() {
-  userStore.logout()
-  router.push('/login')
+  userStore.login()
 }
 </script>
 
