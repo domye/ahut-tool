@@ -39,51 +39,9 @@
       </a-col>
     </a-row>
 
-    <!-- 登录表单 -->
-    <div v-if="!electricityStore.isLoggedIn" class="login-section">
-      <a-card title="登录电费系统" class="neumorphic-card">
-        <a-form layout="vertical" class="login-form">
-          <a-form-item label="学号">
-            <a-input
-              v-model:value="userId"
-              placeholder="请输入学号"
-              size="large"
-              allow-clear
-            />
-          </a-form-item>
-          <a-form-item label="密码">
-            <a-input-password
-              v-model:value="password"
-              placeholder="请输入密码"
-              size="large"
-              allow-clear
-            />
-          </a-form-item>
-          <a-form-item>
-            <a-button
-              type="primary"
-              @click="handleLogin"
-              :loading="electricityStore.loading"
-              size="large"
-              block
-              class="neumorphic-button"
-            >
-              登录
-            </a-button>
-          </a-form-item>
-          <a-alert
-            v-if="electricityStore.message"
-            :message="electricityStore.message"
-            :type="electricityStore.isLoggedIn ? 'success' : 'error'"
-            show-icon
-            style="margin-top: 16px"
-          />
-        </a-form>
-      </a-card>
-    </div>
 
     <!-- 查询条件 -->
-    <div v-else class="filter-section">
+    <div class="filter-section">
       <a-form layout="inline" class="filter-form">
         <a-form-item label="校区">
           <a-select
@@ -151,15 +109,6 @@
               </template>
               重置
             </a-button>
-            <a-button
-              @click="handleLogout"
-              class="neumorphic-button logout-button"
-            >
-              <template #icon>
-                <LogoutOutlined />
-              </template>
-              退出登录
-            </a-button>
           </a-space>
         </a-form-item>
       </a-form>
@@ -167,7 +116,7 @@
         v-if="electricityStore.error"
         :message="electricityStore.error"
         type="error"
-        show-icon
+        show-iconw
         closable
         @close="electricityStore.error = ''"
         style="margin-top: 16px"
@@ -202,20 +151,6 @@ const etypeOptions = [
   { value: 'L', label: '照明' }
 ]
 
-// 登录处理
-function handleLogin() {
-  if (!userId.value || !password.value) {
-    return
-  }
-  electricityStore.login(userId.value, password.value)
-    .then(() => {
-      // 登录成功后自动查询电费
-      handleSearch()
-    })
-    .catch((error) => {
-      console.error('登录失败:', error)
-    })
-}
 
 // 查询处理
 function handleSearch() {
@@ -230,12 +165,6 @@ function handleReset() {
   electricityStore.resetFilters()
 }
 
-// 退出登录处理
-function handleLogout() {
-  electricityStore.logout()
-  userId.value = ''
-  password.value = ''
-}
 </script>
 
 <style scoped>

@@ -7,8 +7,9 @@ func (a *App) JwxtLogin() int {
 	return LoginResponse
 }
 
-func (a *App) PayLogin(userId string, password string) int {
-	formData := PayInstance.GetLoginFormData(userId, password)
+func (a *App) PayLogin() int {
+	userInfo, _ := ConfigInstance.GetPayCredentials()
+	formData := PayInstance.GetLoginFormData(userInfo.User, userInfo.Password)
 	loginResponse := PayInstance.GetToken(formData)
 	return loginResponse
 }

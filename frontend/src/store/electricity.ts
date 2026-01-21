@@ -17,26 +17,15 @@ export const useElectricityStore = defineStore('electricity', () => {
   const Room_No = ref('')     // 房间号
   const etype = ref('K')      // 类型
 
-  function login(userId: string, password: string): Promise<void> {
+  function login(): Promise<void> {
     return new Promise((resolve, reject) => {
-      if (!userId || !password) {
-        message.value = '请输入学号和密码'
-        reject(new Error('请输入学号和密码'))
-        return
-      }
 
       message.value = '登录中...'
       loading.value = true
-      PayLogin(userId, password)
+      PayLogin()
         .then((result: number) => {
-          console.log('PayLogin result:', result)
-          console.log('PayLogin result type:', typeof result)
-          console.log('PayLogin result == 200:', result == 200)
-          console.log('PayLogin result === 200:', result === 200)
           if (result == 200) {
             message.value = '登录成功'
-            isLoggedIn.value = true
-            localStorage.setItem('electricityLoggedIn', 'true')
             resolve()
           } else {
             message.value = '登录失败，请检查学号和密码'
@@ -44,8 +33,6 @@ export const useElectricityStore = defineStore('electricity', () => {
           }
         })
         .catch((error: any) => {
-          console.log('PayLogin error:', error)
-          console.log('PayLogin error type:', typeof error)
           message.value = '登录失败: ' + error
           reject(error)
         })
