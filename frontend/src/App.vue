@@ -1,18 +1,51 @@
 <script setup lang="ts">
-import { onMounted } from 'vue'
+import { onMounted, onUnmounted } from 'vue'
 import { useUserStore } from './store/user'
 import { useElectricityStore } from './store/electricity'
 
 const userStore = useUserStore()
 const electricityStore = useElectricityStore()
-// 在应用挂载时自动登录
-onMounted(async () => {
+
+// 轮询间隔时间（30分钟）
+const POLLING_INTERVAL = 30 * 60 * 1000
+let pollingTimer: number | null = null
+
+// 执行登录操作
+const performLogin = async () => {
   try {
     await userStore.login()
-    await  electricityStore.login()
+    await electricityStore.login()
   } catch (error) {
-    console.error('自动登录失败:', error)
+    console.error('登录失败:', error)
   }
+}
+
+// 启动轮询
+const startPolling = () => {
+  // 先执行一次登录
+  performLogin()
+  // 设置定时器，每30分钟执行一次登录
+  pollingTimer = window.setInterval(() => {
+    performLogin()
+  }, POLLING_INTERVAL)
+}
+
+// 停止轮询
+const stopPolling = () => {
+  if (pollingTimer !== null) {
+    window.clearInterval(pollingTimer)
+    pollingTimer = null
+  }
+}
+
+// 在应用挂载时自动登录并启动轮询
+onMounted(() => {
+  startPolling()
+})
+
+// 在应用卸载时停止轮询
+onUnmounted(() => {
+  stopPolling()
 })
 </script>
 

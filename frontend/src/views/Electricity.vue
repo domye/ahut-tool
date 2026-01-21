@@ -53,20 +53,15 @@
             popup-class-name="neumorphic-select-dropdown"
           />
         </a-form-item>
-        <a-form-item label="楼栋名称">
-          <a-input
-            v-model:value="electricityStore.ld_Name"
-            placeholder="请输入楼栋名称"
+        <a-form-item label="楼栋">
+          <a-select
+            v-model:value="selectedBuilding"
+            placeholder="请选择楼栋"
             style="width: 200px"
             allow-clear
-          />
-        </a-form-item>
-        <a-form-item label="楼栋ID">
-          <a-input
-            v-model:value="electricityStore.ld_Id"
-            placeholder="请输入楼栋ID"
-            style="width: 200px"
-            allow-clear
+            :options="buildingOptions"
+            @change="handleBuildingChange"
+            popup-class-name="neumorphic-select-dropdown"
           />
         </a-form-item>
         <a-form-item label="房间号">
@@ -126,7 +121,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useElectricityStore } from '../store/electricity'
 import { ThunderboltOutlined, LoginOutlined, CheckCircleOutlined, SearchOutlined, RedoOutlined, LogoutOutlined } from '@ant-design/icons-vue'
 
@@ -151,6 +146,95 @@ const etypeOptions = [
   { value: 'L', label: '照明' }
 ]
 
+// 楼栋数据
+const newCampusBuildings = [
+  { Id: "01", Name: "东校区1号学生宿舍楼" },
+  { Id: "02", Name: "东校区2号学生宿舍楼" },
+  { Id: "03", Name: "东校区3号学生宿舍楼" },
+  { Id: "04", Name: "东校区4号学生宿舍楼" },
+  { Id: "05", Name: "东校区5号学生宿舍楼" },
+  { Id: "06", Name: "东校区6号学生宿舍楼" },
+  { Id: "07", Name: "东校区7号学生宿舍楼" },
+  { Id: "08", Name: "东校区8号学生宿舍楼" },
+  { Id: "09", Name: "东校区9号学生宿舍楼" },
+  { Id: "10", Name: "东校区A号学生宿舍楼" },
+  { Id: "11", Name: "东校区B号学生宿舍楼" },
+  { Id: "13", Name: "东校区C号学生宿舍楼" },
+  { Id: "14", Name: "东校区D号学生宿舍楼" },
+  { Id: "15", Name: "东校区E号学生宿舍楼" },
+  { Id: "16", Name: "东校区F号学生宿舍楼" },
+  { Id: "17", Name: "东校区H1号学生宿舍楼" },
+  { Id: "18", Name: "东校区H2号学生宿舍楼" },
+  { Id: "19", Name: "东校区H3号学生宿舍楼" },
+  { Id: "20", Name: "东校区G1号学生宿舍楼" },
+  { Id: "21", Name: "东校区G2号学生宿舍楼" },
+  { Id: "22", Name: "东校区G3号学生宿舍楼" },
+  { Id: "23", Name: "东校区J1号学生宿舍楼" },
+  { Id: "24", Name: "东校区J2号学生宿舍楼" },
+  { Id: "25", Name: "东校区J3号学生宿舍楼" },
+  { Id: "26", Name: "东校区K1号学生宿舍楼" },
+  { Id: "27", Name: "东校区K2号学生宿舍楼" },
+  { Id: "28", Name: "东校区K3号学生宿舍楼" },
+  { Id: "29", Name: "东校区L1号学生宿舍楼" },
+  { Id: "30", Name: "东校区L2号学生宿舍楼" },
+  { Id: "31", Name: "东校区G4号学生宿舍楼" },
+  { Id: "32", Name: "东校区研5号学生宿舍楼" },
+  { Id: "33", Name: "东校区研6号学生宿舍楼" },
+  { Id: "34", Name: "东校区研7号学生宿舍楼" },
+  { Id: "35", Name: "东校区研8号学生宿舍楼" },
+  { Id: "36", Name: "东校区研1号学生宿舍楼" },
+  { Id: "37", Name: "东校区研2号学生宿舍楼" },
+  { Id: "38", Name: "东校区研3号学生宿舍楼" },
+  { Id: "39", Name: "东校区研4号学生宿舍楼" },
+  { Id: "40", Name: "东校区M栋南楼宿舍" },
+  { Id: "41", Name: "东校区M栋北楼宿舍" },
+  { Id: "42", Name: "东校区N栋南楼宿舍" },
+  { Id: "43", Name: "东校区N栋北楼宿舍" }
+]
+
+const oldCampusBuildings = [
+  { Id: "01", Name: "本部校区01栋学生宿舍" },
+  { Id: "02", Name: "本部校区02栋学生宿舍" },
+  { Id: "03", Name: "本部校区03栋学生宿舍" },
+  { Id: "04", Name: "本部校区04栋学生宿舍" },
+  { Id: "05", Name: "本部校区05A栋学生宿舍" },
+  { Id: "06", Name: "本部校区05B栋学生宿舍" },
+  { Id: "07", Name: "本部校区矿东栋学生宿舍" },
+  { Id: "08", Name: "本部校区矿西栋学生宿舍" },
+  { Id: "09", Name: "本部校区研A栋学生宿舍" },
+  { Id: "10", Name: "本部校区研B栋学生宿舍" },
+  { Id: "11", Name: "本部校区8号公寓" },
+  { Id: "12", Name: "本部校区7号公寓" }
+]
+
+// 当前选中的楼栋
+const selectedBuilding = ref('')
+
+// 楼栋选项（根据校区动态生成）
+const buildingOptions = computed(() => {
+  const buildings = electricityStore.xiaoqu === 'OldS' ? oldCampusBuildings : newCampusBuildings
+  return buildings.map(building => ({
+    value: building.Id,
+    label: building.Name
+  }))
+})
+
+// 处理楼栋选择变化
+function handleBuildingChange(value: string) {
+  const buildings = electricityStore.xiaoqu === 'OldS' ? oldCampusBuildings : newCampusBuildings
+  const selected = buildings.find(b => b.Id === value)
+  if (selected) {
+    electricityStore.ld_Id = selected.Id
+    electricityStore.ld_Name = selected.Name
+  }
+}
+
+// 监听校区变化，重置楼栋选择
+watch(() => electricityStore.xiaoqu, () => {
+  selectedBuilding.value = ''
+  electricityStore.ld_Id = ''
+  electricityStore.ld_Name = ''
+})
 
 // 查询处理
 function handleSearch() {
