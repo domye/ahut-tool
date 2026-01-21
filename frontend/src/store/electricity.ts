@@ -61,13 +61,6 @@ export const useElectricityStore = defineStore('electricity', () => {
     })
   }
 
-  function resetFilters() {
-    xiaoqu.value = 'NewS'
-    ld_Name.value = ''
-    ld_Id.value = ''
-    Room_No.value = ''
-    etype.value = 'K'
-  }
 
   function logout() {
     isLoggedIn.value = false
@@ -87,7 +80,6 @@ export const useElectricityStore = defineStore('electricity', () => {
     etype,
     login,
     fetchElectricity,
-    resetFilters,
     logout
   }
 })
