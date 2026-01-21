@@ -79,16 +79,33 @@ function handleToolClick(tool: any) {
   cursor: pointer;
   transition: all 0.3s ease;
   box-shadow: 6px 6px 10px 0 rgba(163,177,198, 0.7), -6px -6px 10px 0 rgba(255,255,255, 0.8);
+  position: relative;
+  overflow: hidden;
+}
+
+.tool-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+  transition: left 0.5s ease;
+}
+
+.tool-card:hover::before {
+  left: 100%;
 }
 
 .tool-card:hover {
   box-shadow: 4px 4px 8px 0 rgba(163,177,198, 0.7), -4px -4px 8px 0 rgba(255,255,255, 0.8);
-  transform: translateY(-2px);
+  transform: translateY(-4px) scale(1.02);
 }
 
 .tool-card:active {
   box-shadow: inset 4px 4px 8px 0 rgba(163,177,198, 0.7), inset -4px -4px 8px 0 rgba(255,255,255, 0.8);
-  transform: translateY(0);
+  transform: translateY(0) scale(0.98);
 }
 
 .tool-icon {
@@ -115,4 +132,25 @@ function handleToolClick(tool: any) {
 .tool-status.status-dev {
   color: #cf1322;
 }
+
+/* 工具卡片进入动画 */
+.slide-up-enter-active {
+  transition: all 0.5s ease;
+}
+
+.slide-up-enter-from {
+  opacity: 0;
+  transform: translateY(30px);
+}
+
+/* 为每个工具卡片添加延迟动画效果 */
+.tool-card:nth-child(1) { animation-delay: 0.05s; }
+.tool-card:nth-child(2) { animation-delay: 0.1s; }
+.tool-card:nth-child(3) { animation-delay: 0.15s; }
+.tool-card:nth-child(4) { animation-delay: 0.2s; }
+.tool-card:nth-child(5) { animation-delay: 0.25s; }
+.tool-card:nth-child(6) { animation-delay: 0.3s; }
+.tool-card:nth-child(7) { animation-delay: 0.35s; }
+.tool-card:nth-child(8) { animation-delay: 0.4s; }
+.tool-card:nth-child(9) { animation-delay: 0.45s; }
 </style>

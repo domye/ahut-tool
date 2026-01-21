@@ -4,7 +4,11 @@
     <div class="main-content" :class="{ 'mobile-content': isMobile }">
       <Header v-if="!isMobile" />
       <div class="content" :class="{ 'mobile-content-inner': isMobile }">
-        <router-view />
+        <router-view v-slot="{ Component }">
+          <transition name="fade" mode="out-in">
+            <component :is="Component" />
+          </transition>
+        </router-view>
       </div>
     </div>
   </div>

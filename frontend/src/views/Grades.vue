@@ -1,52 +1,54 @@
 <template>
   <div class="grades-page">
     <!-- 成绩汇总 -->
-    <a-row :gutter="[24, 24]" class="summary-row">
-      <a-col :xs="24" :sm="12" :md="6" :lg="6" :xl="6">
-        <div class="statistic-card">
-          <div class="statistic-icon">
-            <BookOutlined />
+    <transition-group name="scale" tag="div" class="summary-row">
+      <a-row :gutter="[24, 24]" key="summary">
+        <a-col :xs="24" :sm="12" :md="6" :lg="6" :xl="6">
+          <div class="statistic-card">
+            <div class="statistic-icon">
+              <BookOutlined />
+            </div>
+            <div class="statistic-content">
+              <div class="statistic-title">所修门数</div>
+              <div class="statistic-value">{{ gradesStore.summary.CourseCount || 0 }}</div>
+            </div>
           </div>
-          <div class="statistic-content">
-            <div class="statistic-title">所修门数</div>
-            <div class="statistic-value">{{ gradesStore.summary.CourseCount || 0 }}</div>
+        </a-col>
+        <a-col :xs="24" :sm="12" :md="6" :lg="6" :xl="6">
+          <div class="statistic-card">
+            <div class="statistic-icon">
+              <TrophyOutlined />
+            </div>
+            <div class="statistic-content">
+              <div class="statistic-title">所修总学分</div>
+              <div class="statistic-value">{{ gradesStore.summary.TotalCredit || 0 }}</div>
+            </div>
           </div>
-        </div>
-      </a-col>
-      <a-col :xs="24" :sm="12" :md="6" :lg="6" :xl="6">
-        <div class="statistic-card">
-          <div class="statistic-icon">
-            <TrophyOutlined />
+        </a-col>
+        <a-col :xs="24" :sm="12" :md="6" :lg="6" :xl="6">
+          <div class="statistic-card">
+            <div class="statistic-icon">
+              <RiseOutlined />
+            </div>
+            <div class="statistic-content">
+              <div class="statistic-title">平均学分绩点</div>
+              <div class="statistic-value">{{ gradesStore.summary.AvgGPA || 0 }}</div>
+            </div>
           </div>
-          <div class="statistic-content">
-            <div class="statistic-title">所修总学分</div>
-            <div class="statistic-value">{{ gradesStore.summary.TotalCredit || 0 }}</div>
+        </a-col>
+        <a-col :xs="24" :sm="12" :md="6" :lg="6" :xl="6">
+          <div class="statistic-card">
+            <div class="statistic-icon">
+              <LineChartOutlined />
+            </div>
+            <div class="statistic-content">
+              <div class="statistic-title">平均成绩</div>
+              <div class="statistic-value">{{ gradesStore.summary.AvgScore || 0 }}</div>
+            </div>
           </div>
-        </div>
-      </a-col>
-      <a-col :xs="24" :sm="12" :md="6" :lg="6" :xl="6">
-        <div class="statistic-card">
-          <div class="statistic-icon">
-            <RiseOutlined />
-          </div>
-          <div class="statistic-content">
-            <div class="statistic-title">平均学分绩点</div>
-            <div class="statistic-value">{{ gradesStore.summary.AvgGPA || 0 }}</div>
-          </div>
-        </div>
-      </a-col>
-      <a-col :xs="24" :sm="12" :md="6" :lg="6" :xl="6">
-        <div class="statistic-card">
-          <div class="statistic-icon">
-            <LineChartOutlined />
-          </div>
-          <div class="statistic-content">
-            <div class="statistic-title">平均成绩</div>
-            <div class="statistic-value">{{ gradesStore.summary.AvgScore || 0 }}</div>
-          </div>
-        </div>
-      </a-col>
-    </a-row>
+        </a-col>
+      </a-row>
+    </transition-group>
 
     <!-- 查询条件 -->
     <div class="filter-section">
@@ -281,6 +283,29 @@ onMounted(() => {
   box-shadow: 6px 6px 10px 0 rgba(163,177,198, 0.7), -6px -6px 10px 0 rgba(255,255,255, 0.8);
   height: 100%;
   min-height: 80px;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.statistic-card:hover {
+  box-shadow: 4px 4px 8px 0 rgba(163,177,198, 0.7), -4px -4px 8px 0 rgba(255,255,255, 0.8);
+  transform: translateY(-2px);
+}
+
+.statistic-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+  transition: left 0.5s ease;
+}
+
+.statistic-card:hover::before {
+  left: 100%;
 }
 
 .statistic-icon {
@@ -457,7 +482,6 @@ onMounted(() => {
   padding: 12px !important;
 }
 
-/* 表格行悬停效果 */
 :deep(.ant-table-tbody > tr:hover > td) {
   background-color: #dce1e8 !important;
 }
