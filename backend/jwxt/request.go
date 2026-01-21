@@ -2,6 +2,7 @@ package jwxt
 
 import (
 	"fmt"
+
 	"github.com/go-resty/resty/v2"
 )
 
@@ -28,6 +29,19 @@ func (s *Service) sendGetGradesRequest(formData map[string]string) (string, erro
 	resp, err := s.client.R().
 		SetFormData(formData).
 		Post("http://jwxt.ahut.edu.cn/jsxsd/kscj/cjcx_list")
+
+	if err != nil {
+		return "", err
+	}
+
+	return resp.String(), nil
+}
+
+// sendGetClassesRequest 获取课程信息
+func (s *Service) sendGetClassesRequest(formData map[string]string) (string, error) {
+	resp, err := s.client.R().
+		SetFormData(formData).
+		Post("http://jwxt.ahut.edu.cn/jsxsd/xskb/xskb_list.do")
 
 	if err != nil {
 		return "", err
