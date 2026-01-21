@@ -23,7 +23,7 @@ func ParseClassSchedule(html string) ([]models.Class, error) {
 	}
 
 	// 创建一个映射来跟踪已存在的课程，防止重复
-	existingCourses := make(map[string]*models.Class)
+	existingCourses := make(map[string]bool)
 
 	// 遍历课表表格中的每一行（跳过表头）
 	doc.Find("#kbtable tr").Each(func(rowIndex int, row *goquery.Selection) {
@@ -33,8 +33,7 @@ func ParseClassSchedule(html string) ([]models.Class, error) {
 		}
 
 		// 获取当前行的节次信息
-		periodCell := row.Find("th").First()
-		periodText := strings.TrimSpace(periodCell.Text())
+		periodText := strings.TrimSpace(row.Find("th").First().Text())
 		// 提取节次信息，例如"第1,2节" -> "1-2"
 		period := extractPeriod(periodText)
 
@@ -43,61 +42,42 @@ func ParseClassSchedule(html string) ([]models.Class, error) {
 			// 星期几（colIndex + 1，因为表格第一列是节次）
 			dayOfWeek := colIndex + 1
 
-			// 收集该单元格中所有显示的div元素（详细信息版本）
-			cell.Find("div.kbcontent").Each(func(i int, div *goquery.Selection) {
+			// 只收集该单元格中所有显示的div元素（详细信息版本）
+			// 不再解析kbcontent1，避免重复
+			// 跳过sykb2元素，避免解析空div
+			cell.Find("div.kbcontent:not(.sykb2)").Each(func(i int, div *goquery.Selection) {
 				content, _ := div.Html()
 				if content == "" || strings.TrimSpace(div.Text()) == "&nbsp;" || strings.TrimSpace(div.Text()) == "" {
 					return
 				}
 
-				classInfo := parseDetailedClassInfo(content, dayOfWeek, period)
-				if classInfo.Name != "" {
-					// 生成唯一键值用于去重
-					key := fmt.Sprintf("%s_%d_%s_%s", classInfo.Name, classInfo.DayOfWeek, classInfo.Period, strings.Join(intSliceToStringSlice(classInfo.WeekNumbers), ","))
+				// 检查是否包含多门课程（用"---------------------"分隔）
+				if strings.Contains(content, "---------------------") {
+					// 分割多门课程
+					for _, coursePart := range strings.Split(content, "---------------------") {
+						classInfo := parseDetailedClassInfo(coursePart, dayOfWeek, period)
+						if classInfo.Name != "" {
+							// 生成唯一键值用于去重
+							key := fmt.Sprintf("%s_%d_%s_%s", classInfo.Name, classInfo.DayOfWeek, classInfo.Period, classInfo.WeekNumbers)
 
-					// 如果不存在相同课程，则添加
-					if _, exists := existingCourses[key]; !exists {
-						classes = append(classes, classInfo)
-						existingCourses[key] = &classInfo
-					}
-				}
-			})
-
-			// 同时也要检查简要信息（非放大模式下的信息）
-			cell.Find("div.kbcontent1:not(.sykb1)").Each(func(i int, div *goquery.Selection) {
-				content, _ := div.Html()
-				if content == "" || strings.TrimSpace(div.Text()) == "&nbsp;" || strings.TrimSpace(div.Text()) == "" {
-					return
-				}
-
-				classInfo := parseSimpleClassInfo(content, dayOfWeek, period)
-				if classInfo.Name != "" {
-					// 生成唯一键值用于去重
-					key := fmt.Sprintf("%s_%d_%s_%s", classInfo.Name, classInfo.DayOfWeek, classInfo.Period, strings.Join(intSliceToStringSlice(classInfo.WeekNumbers), ","))
-
-					// 检查是否已存在相同的课程
-					if _, exists := existingCourses[key]; !exists {
-						// 检查是否能与已有的详细课程信息合并
-						found := false
-						for idx, existingClass := range classes {
-							if existingClass.Name == classInfo.Name &&
-								existingClass.DayOfWeek == classInfo.DayOfWeek &&
-								existingClass.Period == classInfo.Period {
-								// 更新现有课程的信息
-								if classes[idx].Classroom == "" && classInfo.Classroom != "" {
-									classes[idx].Classroom = classInfo.Classroom
-								}
-								if len(classes[idx].WeekNumbers) == 0 && len(classInfo.WeekNumbers) > 0 {
-									classes[idx].WeekNumbers = classInfo.WeekNumbers
-								}
-								found = true
-								break
+							// 如果不存在相同课程，则添加
+							if !existingCourses[key] {
+								classes = append(classes, classInfo)
+								existingCourses[key] = true
 							}
 						}
+					}
+				} else {
+					// 单门课程
+					classInfo := parseDetailedClassInfo(content, dayOfWeek, period)
+					if classInfo.Name != "" {
+						// 生成唯一键值用于去重
+						key := fmt.Sprintf("%s_%d_%s_%s", classInfo.Name, classInfo.DayOfWeek, classInfo.Period, classInfo.WeekNumbers)
 
-						if !found {
+						// 如果不存在相同课程，则添加
+						if !existingCourses[key] {
 							classes = append(classes, classInfo)
-							existingCourses[key] = &classInfo
+							existingCourses[key] = true
 						}
 					}
 				}
@@ -124,197 +104,171 @@ func extractPeriod(periodText string) string {
 func parseDetailedClassInfo(contentHtml string, dayOfWeek int, period string) models.Class {
 	var classInfo models.Class
 
-	// 处理换行符和空格
-	content := strings.ReplaceAll(contentHtml, "<br/>", "<br>")
-	content = strings.ReplaceAll(content, "<br />", "<br>")
-	content = strings.ReplaceAll(content, "<br >", "<br>")
-	content = strings.ReplaceAll(content, "", "")
-	content = strings.ReplaceAll(content, "", "")
-	content = strings.ReplaceAll(content, "	", "")
+	// 处理换行符和清理无用标签
+	content := strings.NewReplacer(
+		"<br/>", "<br>",
+		"<br />", "<br>",
+		"<br >", "<br>",
+		"\t", "",
+	).Replace(contentHtml)
 
 	// 使用正则表达式提取font标签及其内容
 	fontRe := regexp.MustCompile(`(?i)<font[^>]*title\s*=\s*['"]([^'"]*)['"][^>]*>(.*?)</font>`)
 	fontMatches := fontRe.FindAllStringSubmatch(content, -1)
 
-	// 创建一个map来存储title和对应的text
-	infoMap := make(map[string]string)
-	for _, match := range fontMatches {
-		if len(match) >= 3 {
-			title := match[1]
-			text := match[2]
-			infoMap[title] = text
-			// 从原始内容中移除已处理的font标签
-			content = strings.Replace(content, match[0], "", 1)
+	// 根据索引位置提取信息: 0是教师，1是周次，2是教室
+	for i, match := range fontMatches {
+		if len(match) < 3 {
+			continue
+		}
+
+		title := match[1]
+		text := match[2]
+
+		switch {
+		case i == 0 && title == "老师":
+			classInfo.Teacher = cleanText(text)
+		case i == 1 && (title == "周次" || title == "周次(节次)"):
+			classInfo.WeekNumbers = extractWeekNumbers(text)
+		case i == 2 && title == "教室":
+			classInfo.Classroom = cleanText(text)
 		}
 	}
 
 	// 处理剩余内容，提取课程名称
-	parts := strings.Split(content, "<br>")
-	className := ""
-	for _, part := range parts {
+	for _, part := range strings.Split(content, "<br>") {
 		cleanPart := cleanText(part)
-		if cleanPart != "" && cleanPart != "&nbsp;" {
-			className = cleanPart
+		// 清理HTML标签
+		cleanPart = removeHtmlTags(cleanPart)
+		// 跳过分隔线
+		if cleanPart != "" && cleanPart != "&nbsp;" && !strings.Contains(cleanPart, "------") {
+			classInfo.Name = cleanPart
 			break
 		}
 	}
 
-	// 从infoMap中提取教师和教室信息
-	if teacher, ok := infoMap["老师"]; ok {
-		classInfo.Teacher = cleanText(teacher)
-	}
-	if classroom, ok := infoMap["教室"]; ok {
-		classInfo.Classroom = cleanText(classroom)
-	}
-
-	// 提取周次信息
-	for key, value := range infoMap {
-		if strings.Contains(key, "周次") || strings.Contains(key, "周(") {
-			classInfo.WeekNumbers = extractWeekNumbers(fmt.Sprintf("%s: %s", key, value))
-			break
-		}
-	}
-
-	classInfo.Name = className
 	classInfo.DayOfWeek = dayOfWeek
 	classInfo.Period = period
 
 	return classInfo
-}
-
-// parseSimpleClassInfo 解析简要课程信息
-func parseSimpleClassInfo(content string, dayOfWeek int, period string) models.Class {
-	var classInfo models.Class
-
-	// 处理换行符
-	content = strings.ReplaceAll(content, "<br/>", "<br>")
-	content = strings.ReplaceAll(content, "<br />", "<br>")
-	content = strings.ReplaceAll(content, "<br >", "<br>")
-	parts := strings.Split(content, "<br>")
-
-	var lines []string
-	for _, part := range parts {
-		cleanPart := cleanText(part)
-		if cleanPart != "" && cleanPart != "&nbsp;" {
-			lines = append(lines, cleanPart)
-		}
-	}
-
-	className := ""
-	for _, line := range lines {
-		line = cleanText(line)
-		if line == "" || line == "&nbsp;" {
-			continue
-		}
-
-		// 检查是否包含教室信息
-		if strings.Contains(line, "教室:") || strings.Contains(line, "教室：") || strings.HasPrefix(line, "教室") {
-			classInfo.Classroom = extractValueFromLine(line)
-		} else if strings.Contains(line, "周次") || strings.Contains(line, "周(") {
-			classInfo.WeekNumbers = extractWeekNumbers(line)
-		} else if className == "" {
-			// 如果还没设置课程名称，这可能是课程名称
-			className = line
-		}
-	}
-
-	// 如果仍然没有课程名称，使用第一个非空行作为课程名称
-	if className == "" && len(lines) > 0 {
-		for _, line := range lines {
-			cleanLine := cleanText(line)
-			if cleanLine != "" && cleanLine != "&nbsp;" &&
-				!strings.Contains(cleanLine, "教室:") && !strings.Contains(cleanLine, "周次") {
-				className = cleanLine
-				break
-			}
-		}
-	}
-
-	classInfo.Name = className
-	classInfo.DayOfWeek = dayOfWeek
-	classInfo.Period = period
-
-	return classInfo
-}
-
-// extractValueFromLine 从带标签的行中提取值，例如"教室: 东教一南502" -> "东教一南502"
-func extractValueFromLine(line string) string {
-	// 查找冒号或中文冒号的位置
-	colonIndex := strings.Index(line, ":")
-	if colonIndex == -1 {
-		colonIndex = strings.Index(line, "：")
-	}
-
-	if colonIndex != -1 && len(line) > colonIndex+1 {
-		return cleanText(line[colonIndex+1:])
-	}
-
-	// 如果没有找到冒号，尝试其他分隔方式
-	parts := strings.FieldsFunc(line, func(c rune) bool {
-		return c == ':' || c == '：'
-	})
-
-	if len(parts) > 1 {
-		return cleanText(parts[1])
-	}
-
-	return cleanText(line)
 }
 
 // extractWeekNumbers 从文本中提取周次信息
-func extractWeekNumbers(text string) []int {
-	var weeks []int
+func extractWeekNumbers(text string) string {
+	// 匹配周次信息，如"1-16(周)"或"1-11,13-14(周)"或"1-12,14(周)"
+	fullRe := regexp.MustCompile(`([\d,-]+)\(周\)`)
+	fullMatches := fullRe.FindStringSubmatch(text)
 
-	// 匹配"X-Y(周)"模式，如"1-16(周)"
+	if len(fullMatches) >= 2 {
+		// 提取周次部分，如"1-11,13-14"或"1-12,14"
+		return fullMatches[1]
+	}
+
+	// 如果没有匹配到完整格式，尝试匹配"X-Y(周)"模式
 	re := regexp.MustCompile(`(\d+)-(\d+)\(周\)`)
 	matches := re.FindAllStringSubmatch(text, -1)
 
-	for _, match := range matches {
-		if len(match) >= 3 {
-			start, _ := strconv.Atoi(match[1])
-			end, _ := strconv.Atoi(match[2])
-			for w := start; w <= end; w++ {
-				weeks = append(weeks, w)
-			}
-		}
-	}
-
-	// 如果没有匹配到范围，尝试匹配单独的数字
-	if len(weeks) == 0 {
-		// 匹配独立的数字（周次）
-		numRe := regexp.MustCompile(`\d+`)
-		numbers := numRe.FindAllString(text, -1)
-		for _, numStr := range numbers {
-			if num, err := strconv.Atoi(numStr); err == nil {
-				// 确保是合理的周次（1-30周）
-				if num >= 1 && num <= 30 {
-					weeks = append(weeks, num)
+	if len(matches) > 0 {
+		// 提取所有周次范围
+		var allWeeks []int
+		for _, match := range matches {
+			if len(match) >= 3 {
+				start, _ := strconv.Atoi(match[1])
+				end, _ := strconv.Atoi(match[2])
+				for w := start; w <= end; w++ {
+					allWeeks = append(allWeeks, w)
 				}
 			}
 		}
+
+		// 去重并排序
+		uniqueWeeks := uniqueSortedInts(allWeeks)
+
+		// 将周次转换为范围字符串
+		return buildWeekRanges(uniqueWeeks)
 	}
 
-	// 去重并排序
-	weeks = removeDuplicatesAndSort(weeks)
+	// 如果没有匹配到范围，尝试匹配单独的数字
+	numRe := regexp.MustCompile(`\d+`)
+	numbers := numRe.FindAllString(text, -1)
 
-	return weeks
+	if len(numbers) > 0 {
+		var weeks []int
+		seen := make(map[int]bool)
+
+		for _, numStr := range numbers {
+			if num, err := strconv.Atoi(numStr); err == nil && num >= 1 && num <= 30 && !seen[num] {
+				seen[num] = true
+				weeks = append(weeks, num)
+			}
+		}
+
+		if len(weeks) == 0 {
+			return ""
+		}
+
+		// 排序并构建范围
+		sort.Ints(weeks)
+		return buildWeekRanges(weeks)
+	}
+
+	return ""
 }
 
-// removeDuplicatesAndSort 去除重复项并排序
-func removeDuplicatesAndSort(slice []int) []int {
+// uniqueSortedInts 去重并排序整数切片
+func uniqueSortedInts(nums []int) []int {
 	seen := make(map[int]bool)
 	var result []int
 
-	for _, item := range slice {
-		if !seen[item] {
-			seen[item] = true
-			result = append(result, item)
+	for _, num := range nums {
+		if !seen[num] {
+			seen[num] = true
+			result = append(result, num)
 		}
 	}
 
 	sort.Ints(result)
-
 	return result
+}
+
+// buildWeekRanges 构建周次范围字符串
+func buildWeekRanges(weeks []int) string {
+	if len(weeks) == 0 {
+		return ""
+	}
+
+	if len(weeks) == 1 {
+		return strconv.Itoa(weeks[0])
+	}
+
+	var result []string
+	start := weeks[0]
+	end := weeks[0]
+
+	for i := 1; i < len(weeks); i++ {
+		if weeks[i] == end+1 {
+			// 连续的周次，更新结束周次
+			end = weeks[i]
+		} else {
+			// 不连续的周次，保存当前范围
+			if start == end {
+				result = append(result, strconv.Itoa(start))
+			} else {
+				result = append(result, fmt.Sprintf("%d-%d", start, end))
+			}
+			start = weeks[i]
+			end = weeks[i]
+		}
+	}
+
+	// 添加最后一个范围
+	if start == end {
+		result = append(result, strconv.Itoa(start))
+	} else {
+		result = append(result, fmt.Sprintf("%d-%d", start, end))
+	}
+
+	return strings.Join(result, ",")
 }
 
 // cleanText 清理文本
@@ -325,11 +279,15 @@ func cleanText(text string) string {
 	return text
 }
 
-// intSliceToStringSlice 将整数切片转换为字符串切片，用于生成唯一键
-func intSliceToStringSlice(slice []int) []string {
-	result := make([]string, len(slice))
-	for i, v := range slice {
-		result[i] = strconv.Itoa(v)
-	}
-	return result
+// removeHtmlTags 去除HTML标签
+func removeHtmlTags(text string) string {
+	// 使用正则表达式去除HTML标签
+	re := regexp.MustCompile(`<[^>]*>`)
+	text = re.ReplaceAllString(text, "")
+	// 去除多余的"P"标记（通常表示实践课）
+	text = strings.ReplaceAll(text, " P", "")
+	text = strings.ReplaceAll(text, "P", "")
+	// 清理多余的空格
+	text = strings.TrimSpace(text)
+	return text
 }
