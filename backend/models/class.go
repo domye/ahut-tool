@@ -7,7 +7,7 @@ type Class struct {
 	Classroom   string `json:"classroom"`   // 教室
 	DayOfWeek   int    `json:"dayOfWeek"`   // 星期几（1-7）
 	Period      string `json:"period"`      // 节次（如"1-2"）
-	WeekNumbers []int  `json:"weekNumbers"` // 周次列表（如[1,2,3...]）
+	WeekNumbers string `json:"weekNumbers"` // 周次（如"1-13"）
 }
 
 // ClassScheduleResponse 课程表响应结构体

@@ -10,6 +10,12 @@ import (
 	"github.com/PuerkitoBio/goquery"
 )
 
+// 预编译正则表达式以提高性能
+var (
+	summaryRegex = regexp.MustCompile(`所修门数:(\d+) 所修总学分:([\d.]+) 平均学分绩点:([\d.]+) 平均成绩:([\d.]+)`)
+	whitespaceRe = regexp.MustCompile(`\s+`)
+)
+
 // ParseGrades 从HTML中解析成绩信息
 func ParseGrades(html string) ([]models.Grade, *models.GradeSummary, error) {
 	var grades []models.Grade
@@ -22,8 +28,7 @@ func ParseGrades(html string) ([]models.Grade, *models.GradeSummary, error) {
 	}
 
 	// 提取成绩汇总信息
-	summaryRegex := regexp.MustCompile(`所修门数:(\d+) 所修总学分:([\d.]+) 平均学分绩点:([\d.]+) 平均成绩:([\d.]+)`)
-	summaryText := doc.Find("div").First().Text()
+	summaryText := strings.TrimSpace(doc.Find("div").First().Text())
 	summaryMatches := summaryRegex.FindStringSubmatch(summaryText)
 	if len(summaryMatches) == 5 {
 		summary.CourseCount, _ = strconv.Atoi(summaryMatches[1])
@@ -31,6 +36,9 @@ func ParseGrades(html string) ([]models.Grade, *models.GradeSummary, error) {
 		summary.AvgGPA, _ = strconv.ParseFloat(summaryMatches[3], 64)
 		summary.AvgScore, _ = strconv.ParseFloat(summaryMatches[4], 64)
 	}
+
+	// 预分配切片容量以提高性能（假设平均约100门课程）
+	grades = make([]models.Grade, 0, 100)
 
 	// 查找成绩表格
 	doc.Find("#dataList tr").Each(func(i int, s *goquery.Selection) {
@@ -47,28 +55,28 @@ func ParseGrades(html string) ([]models.Grade, *models.GradeSummary, error) {
 
 		// 提取成绩，可能在a标签中或直接在td中
 		scoreCell := cells.Eq(5)
-		scoreText := scoreCell.Text()
+		scoreText := strings.TrimSpace(scoreCell.Text())
 		if link := scoreCell.Find("a"); link.Length() > 0 {
-			scoreText = link.Text()
+			scoreText = strings.TrimSpace(link.Text())
 		}
 
 		grade := models.Grade{
 			Index:        parseInt(cells.Eq(0).Text()),
-			Semester:     strings.TrimSpace(cells.Eq(1).Text()),
-			CourseID:     strings.TrimSpace(cells.Eq(2).Text()),
-			CourseName:   strings.TrimSpace(cells.Eq(3).Text()),
-			GroupName:    strings.TrimSpace(cells.Eq(4).Text()),
-			Score:        strings.TrimSpace(scoreText),
-			ScoreFlag:    strings.TrimSpace(cells.Eq(6).Text()),
+			Semester:     normalizeText(cells.Eq(1).Text()),
+			CourseID:     normalizeText(cells.Eq(2).Text()),
+			CourseName:   normalizeText(cells.Eq(3).Text()),
+			GroupName:    normalizeText(cells.Eq(4).Text()),
+			Score:        scoreText,
+			ScoreFlag:    normalizeText(cells.Eq(6).Text()),
 			Credit:       parseFloat(cells.Eq(7).Text()),
 			TotalHours:   parseInt(cells.Eq(8).Text()),
 			GPA:          parseFloat(cells.Eq(9).Text()),
-			RetakeSem:    strings.TrimSpace(cells.Eq(10).Text()),
-			ExamMode:     strings.TrimSpace(cells.Eq(11).Text()),
-			ExamType:     strings.TrimSpace(cells.Eq(12).Text()),
-			CourseAttr:   strings.TrimSpace(cells.Eq(13).Text()),
-			CourseNature: strings.TrimSpace(cells.Eq(14).Text()),
-			GEType:       strings.TrimSpace(cells.Eq(15).Text()),
+			RetakeSem:    normalizeText(cells.Eq(10).Text()),
+			ExamMode:     normalizeText(cells.Eq(11).Text()),
+			ExamType:     normalizeText(cells.Eq(12).Text()),
+			CourseAttr:   normalizeText(cells.Eq(13).Text()),
+			CourseNature: normalizeText(cells.Eq(14).Text()),
+			GEType:       normalizeText(cells.Eq(15).Text()),
 		}
 
 		grades = append(grades, grade)
@@ -77,9 +85,16 @@ func ParseGrades(html string) ([]models.Grade, *models.GradeSummary, error) {
 	return grades, &summary, nil
 }
 
+// normalizeText 规范化文本（去除多余空白字符）
+func normalizeText(s string) string {
+	s = strings.TrimSpace(s)
+	return whitespaceRe.ReplaceAllString(s, " ")
+}
+
 // parseInt 将字符串转换为整数
 func parseInt(s string) int {
-	i, err := strconv.Atoi(strings.TrimSpace(s))
+	s = strings.TrimSpace(s)
+	i, err := strconv.Atoi(s)
 	if err != nil {
 		return 0
 	}
@@ -88,7 +103,8 @@ func parseInt(s string) int {
 
 // parseFloat 将字符串转换为浮点数
 func parseFloat(s string) float64 {
-	f, err := strconv.ParseFloat(strings.TrimSpace(s), 64)
+	s = strings.TrimSpace(s)
+	f, err := strconv.ParseFloat(s, 64)
 	if err != nil {
 		return 0
 	}
