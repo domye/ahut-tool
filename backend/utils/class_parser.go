@@ -22,8 +22,8 @@ func ParseClassSchedule(html string) ([]models.Class, error) {
 		return nil, err
 	}
 
-	// 创建一个映射来跟踪已存在的课程，防止重复
-	existingCourses := make(map[string]bool)
+	// 创建一个映射来跟踪已存在的课程，防止重复，并支持合并周次信息
+	existingCoursesMap := make(map[string]*models.Class)
 
 	// 遍历课表表格中的每一行（跳过表头）
 	doc.Find("#kbtable tr").Each(func(rowIndex int, row *goquery.Selection) {
@@ -57,13 +57,17 @@ func ParseClassSchedule(html string) ([]models.Class, error) {
 					for _, coursePart := range strings.Split(content, "---------------------") {
 						classInfo := parseDetailedClassInfo(coursePart, dayOfWeek, period)
 						if classInfo.Name != "" {
-							// 生成唯一键值用于去重
-							key := fmt.Sprintf("%s_%d_%s_%s", classInfo.Name, classInfo.DayOfWeek, classInfo.Period, classInfo.WeekNumbers)
+							// 生成唯一键值用于去重（不包含周次）
+							key := fmt.Sprintf("%s_%d_%s_%s_%s", classInfo.Name, classInfo.DayOfWeek, classInfo.Period, classInfo.Teacher, classInfo.Classroom)
 
-							// 如果不存在相同课程，则添加
-							if !existingCourses[key] {
+							// 检查是否已存在相同课程
+							if existingClass, exists := existingCoursesMap[key]; exists {
+								// 合并周次信息
+								existingClass.WeekNumbers = mergeWeekRanges(existingClass.WeekNumbers, classInfo.WeekNumbers)
+							} else {
+								// 添加新课程
 								classes = append(classes, classInfo)
-								existingCourses[key] = true
+								existingCoursesMap[key] = &classes[len(classes)-1]
 							}
 						}
 					}
@@ -71,13 +75,17 @@ func ParseClassSchedule(html string) ([]models.Class, error) {
 					// 单门课程
 					classInfo := parseDetailedClassInfo(content, dayOfWeek, period)
 					if classInfo.Name != "" {
-						// 生成唯一键值用于去重
-						key := fmt.Sprintf("%s_%d_%s_%s", classInfo.Name, classInfo.DayOfWeek, classInfo.Period, classInfo.WeekNumbers)
+						// 生成唯一键值用于去重（不包含周次）
+						key := fmt.Sprintf("%s_%d_%s_%s_%s", classInfo.Name, classInfo.DayOfWeek, classInfo.Period, classInfo.Teacher, classInfo.Classroom)
 
-						// 如果不存在相同课程，则添加
-						if !existingCourses[key] {
+						// 检查是否已存在相同课程
+						if existingClass, exists := existingCoursesMap[key]; exists {
+							// 合并周次信息
+							existingClass.WeekNumbers = mergeWeekRanges(existingClass.WeekNumbers, classInfo.WeekNumbers)
+						} else {
+							// 添加新课程
 							classes = append(classes, classInfo)
-							existingCourses[key] = true
+							existingCoursesMap[key] = &classes[len(classes)-1]
 						}
 					}
 				}
@@ -290,4 +298,59 @@ func removeHtmlTags(text string) string {
 	// 清理多余的空格
 	text = strings.TrimSpace(text)
 	return text
+}
+
+// mergeWeekRanges 合并两个周次范围字符串
+func mergeWeekRanges(range1, range2 string) string {
+	if range1 == "" {
+		return range2
+	}
+	if range2 == "" {
+		return range1
+	}
+
+	// 解析第一个周次范围
+	weeks1 := parseWeekRange(range1)
+	// 解析第二个周次范围
+	weeks2 := parseWeekRange(range2)
+
+	// 合并两个周次数组
+	merged := append(weeks1, weeks2...)
+
+	// 去重并排序
+	uniqueWeeks := uniqueSortedInts(merged)
+
+	// 构建周次范围字符串
+	return buildWeekRanges(uniqueWeeks)
+}
+
+// parseWeekRange 解析周次范围字符串，返回所有周次的数组
+func parseWeekRange(weekRange string) []int {
+	var weeks []int
+
+	// 分割多个范围，如"1-9,11-12"
+	ranges := strings.Split(weekRange, ",")
+
+	for _, r := range ranges {
+		// 检查是否是范围，如"1-9"
+		if strings.Contains(r, "-") {
+			parts := strings.Split(r, "-")
+			if len(parts) == 2 {
+				start, err1 := strconv.Atoi(strings.TrimSpace(parts[0]))
+				end, err2 := strconv.Atoi(strings.TrimSpace(parts[1]))
+				if err1 == nil && err2 == nil {
+					for w := start; w <= end; w++ {
+						weeks = append(weeks, w)
+					}
+				}
+			}
+		} else {
+			// 单个周次
+			if week, err := strconv.Atoi(strings.TrimSpace(r)); err == nil {
+				weeks = append(weeks, week)
+			}
+		}
+	}
+
+	return weeks
 }
