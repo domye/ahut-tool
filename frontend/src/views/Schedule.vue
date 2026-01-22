@@ -45,9 +45,10 @@
             :class="{ 'has-course': hasCourse(day, period) }"
           >
             <div
-              v-for="course in getCourse(day, period)"
-              :key="course.name"
+              v-for="(course, index) in getCourse(day, period)"
+              :key="course.name + '-' + index"
               class="course-card"
+              :class="{ 'single-course': getCourse(day, period).length === 1, 'multiple-courses': getCourse(day, period).length > 1 }"
               :style="{ background: getCourseColor(course.name) }"
             >
               <div class="course-name">{{ course.name }}</div>
@@ -296,6 +297,7 @@ onMounted(() => {
 .schedule-grid {
   display: grid;
   grid-template-columns: 80px repeat(5, 1fr);
+  grid-auto-rows: minmax(120px, auto);
   gap: 8px;
 }
 
@@ -303,7 +305,7 @@ onMounted(() => {
   background-color: #e0e5ec;
   border-radius: 12px;
   padding: 12px;
-  min-height: 100px;
+  min-height: 120px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -322,15 +324,16 @@ onMounted(() => {
   color: #718096;
   writing-mode: vertical-rl;
   text-orientation: mixed;
-  min-height: 100px;
+  min-height: 120px;
 }
 
 .course-cell {
   flex-direction: column;
-  align-items: flex-start;
+  align-items: stretch;
   justify-content: flex-start;
   padding: 8px;
   overflow: hidden;
+  display: flex;
 }
 
 .course-cell.has-course {
@@ -339,12 +342,23 @@ onMounted(() => {
 
 .course-card {
   width: 100%;
-  padding: 8px;
+  padding: 10px;
   border-radius: 8px;
   color: white;
   margin-bottom: 4px;
   box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.course-card.single-course {
+  height: calc(100% - 4px); /* 减去margin-bottom */
+}
+
+.course-card.multiple-courses {
+  height: auto;
 }
 
 .course-card:hover {
@@ -356,10 +370,10 @@ onMounted(() => {
   font-weight: 1000;
   font-size: 0.9rem;
   margin-bottom: 4px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
   text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.4);
+  word-break: break-all;
+  white-space: normal;
+  line-height: 1.2;
 }
 
 .course-info {
@@ -367,30 +381,33 @@ onMounted(() => {
   font-size: 0.9rem;
   opacity: 0.9;
   margin-bottom: 2px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
   text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.4);
+  word-break: break-all;
+  white-space: normal;
+  line-height: 1.2;
 }
 
 /* 响应式设计 */
 @media (max-width: 1024px) {
   .schedule-grid {
     grid-template-columns: 60px repeat(5, 1fr);
+    grid-auto-rows: minmax(100px, auto);
     gap: 6px;
   }
 
   .schedule-cell {
     padding: 8px;
-    min-height: 80px;
+    min-height: 100px;
   }
 
   .course-name {
     font-size: 0.7rem;
+    line-height: 1.2;
   }
 
   .course-info {
     font-size: 0.7rem;
+    line-height: 1.2;
   }
 }
 
@@ -430,21 +447,24 @@ onMounted(() => {
 
   .schedule-grid {
     grid-template-columns: 40px repeat(5, 1fr);
+    grid-auto-rows: minmax(80px, auto);
     gap: 4px;
   }
 
   .schedule-cell {
     padding: 4px;
-    min-height: 60px;
+    min-height: 80px;
     font-size: 0.7rem;
   }
 
   .course-name {
     font-size: 0.7rem;
+    line-height: 1.2;
   }
 
   .course-info {
     font-size: 0.7rem;
+    line-height: 1.2;
   }
 }
 </style>
