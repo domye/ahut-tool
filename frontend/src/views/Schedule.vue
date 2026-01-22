@@ -1,33 +1,66 @@
 <template>
-  <div class="schedule-container">
-    <div class="schedule-header">
-      <h2 class="page-title">课程表</h2>
-      <div class="selectors">
-        <div class="semester-selector">
-          <select v-model="scheduleStore.currentSemester" @change="handleSemesterChange" class="neumorphic-select">
-            <option value="2025-2026-1">2025-2026 第一学期</option>
-            <option value="2025-2026-2">2025-2026 第二学期</option>
-          </select>
-        </div>
-        <div class="week-selector">
-          <div class="week-info">第 {{ scheduleStore.currentWeek }} 周</div>
-          <button @click="handlePrevWeek" class="neumorphic-btn week-btn">上一周</button>
-          <button @click="handleNextWeek" class="neumorphic-btn week-btn">下一周</button>
-        </div>
-      </div>
+  <div class="schedule-page">
+    <!-- 查询条件 -->
+    <div class="filter-section">
+      <a-form layout="inline" class="filter-form">
+        <a-form-item label="学期">
+          <a-select
+            v-model:value="scheduleStore.currentSemester"
+            @change="handleSemesterChange"
+            placeholder="请选择学期"
+            style="width: 200px"
+            allow-clear
+            :options="semesterOptions"
+            popup-class-name="neumorphic-select-dropdown"
+          />
+        </a-form-item>
+        <a-form-item label="当前周次">
+          <a-space>
+            <a-button @click="handlePrevWeek" class="neumorphic-button">
+              <template #icon>
+                <LeftOutlined />
+              </template>
+              上一周
+            </a-button>
+            <a-tag class="week-tag">第 {{ scheduleStore.currentWeek }} 周</a-tag>
+            <a-button @click="handleNextWeek" class="neumorphic-button">
+              下一周
+              <template #icon>
+                <RightOutlined />
+              </template>
+            </a-button>
+          </a-space>
+        </a-form-item>
+        <a-form-item>
+          <a-space :size="20">
+            <a-button
+              type="primary"
+              @click="handleRefresh"
+              :loading="scheduleStore.loading"
+              class="neumorphic-button query-button"
+            >
+              <template #icon>
+                <ReloadOutlined />
+              </template>
+              刷新
+            </a-button>
+          </a-space>
+        </a-form-item>
+      </a-form>
+      <a-alert
+        v-if="scheduleStore.error"
+        :message="scheduleStore.error"
+        type="error"
+        show-icon
+        closable
+        @close="scheduleStore.error = ''"
+        style="margin-top: 16px"
+      />
     </div>
 
-    <div v-if="scheduleStore.loading" class="loading-container">
-      <div class="spinner"></div>
-      <p>加载中...</p>
-    </div>
 
-    <div v-else-if="scheduleStore.error" class="error-container">
-      <p class="error-message">{{ scheduleStore.error }}</p>
-      <button @click="handleRefresh" class="neumorphic-btn">重试</button>
-    </div>
 
-    <div v-else class="schedule-content">
+    <div v-if="!scheduleStore.loading && !scheduleStore.error" class="schedule-content">
       <div class="schedule-grid">
         <!-- 表头 -->
         <div class="schedule-cell header-cell"></div>
@@ -66,11 +99,18 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
 import { useScheduleStore } from '../store/schedule'
+import { LeftOutlined, RightOutlined, ReloadOutlined } from '@ant-design/icons-vue'
 
 const scheduleStore = useScheduleStore()
 
 const weekDays = ['周一', '周二', '周三', '周四', '周五']
 const periods = ['1-2', '3-4', '5-6', '7-8', '9-10-11']
+
+// 学期选项
+const semesterOptions = [
+  { value: '2025-2026-1', label: '2025-2026 第一学期' },
+  { value: '2025-2026-2', label: '2025-2026 第二学期' }
+]
 
 // 处理上一周
 function handlePrevWeek() {
@@ -163,128 +203,184 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.schedule-container {
+.schedule-page {
   padding: 24px;
-  max-width: 1400px;
-  margin: 0 auto;
-}
-
-.schedule-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 24px;
-}
-
-.page-title {
-  font-size: 1.8rem;
-  color: #4a5568;
-  margin: 0;
-  font-weight: 600;
-}
-
-.selectors {
-  display: flex;
-  align-items: center;
-  gap: 24px;
-}
-
-.semester-selector {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.week-selector {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.week-info {
-  padding: 10px 16px;
-  border-radius: 12px;
   background-color: #e0e5ec;
-  color: #4a5568;
+  min-height: calc(100vh - 48px);
+}
+
+.filter-section {
+  background-color: #e0e5ec;
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 24px;
+  box-shadow: 6px 6px 10px 0 rgba(163,177,198, 0.7), -6px -6px 10px 0 rgba(255,255,255, 0.8);
+}
+
+.filter-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: center;
+}
+
+:deep(.filter-form .ant-form-item) {
+  margin-bottom: 0;
+}
+
+:deep(.filter-form .ant-form-item-label > label) {
+  color: #4a5568 !important;
+  padding-right: 8px;
+  font-weight: 500;
+}
+
+:deep(.ant-form-item) {
+  margin-bottom: 16px;
+}
+
+:deep(.ant-form-item-label) {
+  padding-bottom: 4px;
+}
+
+/* 按钮新拟态风格 */
+:deep(.ant-btn) {
+  background-color: #e0e5ec !important;
+  border: none !important;
+  box-shadow: 6px 6px 10px 0 rgba(163,177,198, 0.7), -6px -6px 10px 0 rgba(255,255,255, 0.8) !important;
+  border-radius: 12px !important;
+  color: #4a5568 !important;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  padding: 8px 16px;
+}
+
+:deep(.ant-btn-primary) {
+  background-color: #409eff !important;
+  color: white !important;
+  box-shadow: 6px 6px 10px 0 rgba(64, 158, 255, 0.3), -6px -6px 10px 0 rgba(150, 200, 255, 0.2) !important;
+}
+
+:deep(.ant-btn:hover) {
+  box-shadow: 4px 4px 8px 0 rgba(163,177,198, 0.7), -4px -4px 8px 0 rgba(255,255,255, 0.8) !important;
+}
+
+:deep(.ant-btn-primary:hover) {
+  box-shadow: 4px 4px 8px 0 rgba(64, 158, 255, 0.3), -4px -4px 8px 0 rgba(150, 200, 255, 0.2) !important;
+}
+
+:deep(.ant-btn:active) {
+  box-shadow: inset 4px 4px 8px 0 rgba(163,177,198, 0.7), inset -4px -4px 8px 0 rgba(255,255,255, 0.8) !important;
+}
+
+:deep(.ant-btn-primary:active) {
+  box-shadow: inset 4px 4px 8px 0 rgba(64, 158, 255, 0.3), inset -4px -4px 8px 0 rgba(150, 200, 255, 0.2) !important;
+}
+
+/* 下拉框新拟态风格 */
+:deep(.ant-select-selector) {
+  background-color: #e0e5ec !important;
+  border: none !important;
+  border-radius: 8px !important;
+  box-shadow: 4px 4px 8px 0 rgba(163,177,198, 0.3), -4px -4px 8px 0 rgba(255,255,255, 0.8) !important;
+  color: #4a5568 !important;
+}
+
+:deep(.ant-select-focused .ant-select-selector) {
+  box-shadow: 4px 4px 8px 0 rgba(163,177,198, 0.3), -4px -4px 8px 0 rgba(255,255,255, 0.8) !important;
+}
+
+:deep(.ant-select-arrow) {
+  color: #4a5568 !important;
+}
+
+/* 标签样式 */
+:deep(.ant-tag) {
+  border: none !important;
+  font-weight: 500;
+  border-radius: 8px;
+  padding: 4px 12px;
+  box-shadow: 3px 3px 6px 0 rgba(163,177,198, 0.2), -3px -3px 6px 0 rgba(255,255,255, 0.8);
+}
+
+.week-tag {
+  padding: 8px 16px;
   font-size: 1rem;
   font-weight: 500;
-  box-shadow: 6px 6px 10px 0 rgba(163,177,198, 0.7), -6px -6px 10px 0 rgba(255,255,255, 0.7);
-}
-
-.week-btn {
-  padding: 10px 16px;
   border-radius: 12px;
-  border: none;
-  background-color: #e0e5ec;
-  color: #4a5568;
-  font-size: 0.9rem;
-  box-shadow: 6px 6px 10px 0 rgba(163,177,198, 0.7), -6px -6px 10px 0 rgba(255,255,255, 0.7);
-  cursor: pointer;
+  background-color: #e0e5ec !important;
+  color: #4a5568 !important;
+  box-shadow: 4px 4px 8px 0 rgba(163,177,198, 0.3), -4px -4px 8px 0 rgba(255,255,255, 0.8) !important;
+}
+
+/* 下拉菜单新拟态风格 - 全局样式 */
+:global(.neumorphic-select-dropdown) {
+  background-color: #e0e5ec !important;
+  border: none !important;
+  border-radius: 12px !important;
+  box-shadow: 6px 6px 10px 0 rgba(163,177,198, 0.7), -6px -6px 10px 0 rgba(255,255,255, 0.8) !important;
+  padding: 8px !important;
+}
+
+:global(.neumorphic-select-dropdown .ant-select-item) {
+  background-color: transparent !important;
+  color: #4a5568 !important;
+  border-radius: 8px;
+  margin: 4px 0;
   transition: all 0.3s ease;
+  box-shadow: inset 2px 2px 4px 0 rgba(163,177,198, 0.2), inset -2px -2px 4px 0 rgba(255,255,255, 0.8) !important;
 }
 
-.week-btn:hover {
-  box-shadow: 4px 4px 8px 0 rgba(163,177,198, 0.7), -4px -4px 8px 0 rgba(255,255,255, 0.7);
+:global(.neumorphic-select-dropdown .ant-select-item-option-selected) {
+  background-color: #409eff !important;
+  color: white !important;
+  box-shadow: 3px 3px 6px 0 rgba(64, 158, 255, 0.3), -3px -3px 6px 0 rgba(150, 200, 255, 0.2) !important;
 }
 
-.week-btn:active {
-  box-shadow: inset 4px 4px 8px 0 rgba(163,177,198, 0.7), inset -4px -4px 8px 0 rgba(255,255,255, 0.7);
+:global(.neumorphic-select-dropdown .ant-select-item-option-active) {
+  background-color: #dce1e8 !important;
+  color: #4a5568 !important;
+  box-shadow: inset 2px 2px 4px 0 rgba(163,177,198, 0.3), inset -2px -2px 4px 0 rgba(255,255,255, 0.8) !important;
 }
 
-.neumorphic-select {
-  padding: 10px 16px;
-  border-radius: 12px;
-  border: none;
-  background-color: #e0e5ec;
-  color: #4a5568;
-  font-size: 1rem;
-  box-shadow: 6px 6px 10px 0 rgba(163,177,198, 0.7), -6px -6px 10px 0 rgba(255,255,255, 0.7);
-  cursor: pointer;
-  transition: all 0.3s ease;
+:global(.neumorphic-select-dropdown .ant-select-item-option-selected.ant-select-item-option-active) {
+  background-color: #409eff !important;
+  color: white !important;
+  box-shadow: 3px 3px 6px 0 rgba(64, 158, 255, 0.3), -3px -3px 6px 0 rgba(150, 200, 255, 0.2) !important;
 }
 
-.neumorphic-select:hover {
-  box-shadow: 4px 4px 8px 0 rgba(163,177,198, 0.7), -4px -4px 8px 0 rgba(255,255,255, 0.7);
+/* 按钮新拟态风格 */
+.neumorphic-button {
+  background-color: #e0e5ec !important;
+  border: none !important;
+  border-radius: 8px !important;
+  color: #4a5568 !important;
+  font-weight: 500;
+  height: 40px !important;
+  padding: 0 24px !important;
+  box-shadow: 4px 4px 8px 0 rgba(163,177,198, 0.3), -4px -4px 8px 0 rgba(255,255,255, 0.8) !important;
+  transition: all 0.3s ease !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
 }
 
-.neumorphic-select:focus {
-  outline: none;
-  box-shadow: inset 4px 4px 8px 0 rgba(163,177,198, 0.7), inset -4px -4px 8px 0 rgba(255,255,255, 0.7);
+.neumorphic-button:hover {
+  box-shadow: 6px 6px 12px 0 rgba(163,177,198, 0.4), -6px -6px 12px 0 rgba(255,255,255, 0.9) !important;
+  transform: translateY(-2px);
 }
 
-.loading-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 60px 0;
+.neumorphic-button:active {
+  box-shadow: inset 2px 2px 4px 0 rgba(163,177,198, 0.3), inset -2px -2px 4px 0 rgba(255,255,255, 0.8) !important;
+  transform: translateY(0);
 }
 
-.spinner {
-  width: 50px;
-  height: 50px;
-  border: 4px solid #e0e5ec;
-  border-top-color: #4a5568;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
+/* 查询按钮特殊样式 */
+.query-button {
+  color: #409eff !important;
 }
 
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
-.error-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 60px 0;
-  gap: 16px;
-}
-
-.error-message {
-  color: #cf1322;
-  font-size: 1.1rem;
+.query-button:hover {
+  color: #66b1ff !important;
 }
 
 .schedule-content {
@@ -412,37 +508,32 @@ onMounted(() => {
 }
 
 @media (max-width: 768px) {
-  .schedule-container {
+  .schedule-page {
     padding: 16px;
   }
 
-  .schedule-header {
+  .filter-form {
     flex-direction: column;
-    gap: 16px;
-    align-items: flex-start;
+    align-items: stretch;
   }
 
-  .selectors {
+  :deep(.filter-form .ant-form-item) {
     width: 100%;
-    flex-direction: column;
-    align-items: flex-start;
+    margin-bottom: 16px;
   }
 
-  .semester-selector {
-    width: 100%;
+  :deep(.filter-form .ant-select) {
+    width: 100% !important;
   }
 
-  .week-selector {
-    width: 100%;
-    justify-content: space-between;
+  :deep(.ant-select-selector) {
+    min-height: 40px !important;
+    padding: 4px 12px !important;
   }
 
-  .neumorphic-select {
-    flex: 1;
-  }
-
-  .week-btn {
-    flex: 1;
+  :deep(.ant-select-selection-item) {
+    line-height: 32px !important;
+    font-size: 14px;
   }
 
   .schedule-grid {
