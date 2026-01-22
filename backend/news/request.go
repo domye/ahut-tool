@@ -27,7 +27,7 @@ func (s *Service) sendGetAnnouncementRequest() (string, error) {
 // sendGetNewsRequest 获取学校要闻
 func (s *Service) sendGetNewsRequest() (string, error) {
 	resp, err := s.client.R().
-		Post(NewsURL)
+		Post(SchoolNewsURL)
 
 	if err != nil {
 		return "", err

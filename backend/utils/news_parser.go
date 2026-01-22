@@ -49,9 +49,70 @@ func ParseNotifications(html string) ([]models.News, error) {
 		dateText := normalizeText(link.Find(".time").Text())
 		// 移除日期前的图片标签文本
 		dateText = strings.TrimPrefix(dateText, "图片")
+		// 转换日期格式
+		dateText = formatDate(dateText)
 
 		// 提取新闻内容
 		content := normalizeText(link.Find("p").Not(".time").Text())
+
+		news := models.News{
+			Title:   title,
+			Content: content,
+			Date:    dateText,
+			Url:     href,
+		}
+
+		newsList = append(newsList, news)
+	})
+
+	return newsList, nil
+}
+
+// ParseNews 从HTML中解析新闻信息
+func ParseNews(html string) ([]models.News, error) {
+	var newsList []models.News
+
+	// 使用goquery解析HTML
+	doc, err := goquery.NewDocumentFromReader(strings.NewReader(html))
+	if err != nil {
+		return nil, err
+	}
+
+	// 预分配切片容量以提高性能（假设平均约20条新闻）
+	newsList = make([]models.News, 0, 20)
+
+	// 查找新闻列表
+	doc.Find(".p2_left_ul li").Each(func(i int, s *goquery.Selection) {
+		// 获取新闻链接
+		link := s.Find("a")
+		if link.Length() == 0 {
+			return
+		}
+
+		// 提取新闻URL
+		href, exists := link.Attr("href")
+		if !exists {
+			return
+		}
+
+		// 补全URL为绝对路径
+		if strings.HasPrefix(href, "info/") {
+			href = "https://news.ahut.edu.cn/" + href
+		}
+
+		// 提取新闻标题
+		title := normalizeText(link.Find(".bt").Text())
+		if title == "" {
+			return
+		}
+
+		// 提取新闻日期
+		dateText := normalizeText(link.Find(".p2").Text())
+		// 转换日期格式
+		dateText = formatDate(dateText)
+
+		// 提取新闻内容
+		content := normalizeText(link.Find(".zy").Text())
 
 		news := models.News{
 			Title:   title,

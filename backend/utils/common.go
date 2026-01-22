@@ -63,3 +63,25 @@ func parseFloat(s string) float64 {
 	}
 	return f
 }
+
+// formatDate 将日期从"2026年01月05日"格式转换为"2026-01-05"格式
+func formatDate(dateStr string) string {
+	// 使用正则表达式匹配"年月日"格式的日期
+	re := regexp.MustCompile(`(\d{4})年(\d{1,2})月(\d{1,2})日`)
+	matches := re.FindStringSubmatch(dateStr)
+	if len(matches) == 4 {
+		year := matches[1]
+		month := matches[2]
+		day := matches[3]
+		// 确保月份和日期是两位数
+		if len(month) == 1 {
+			month = "0" + month
+		}
+		if len(day) == 1 {
+			day = "0" + day
+		}
+		return year + "-" + month + "-" + day
+	}
+	// 如果不是"年月日"格式，直接返回原字符串
+	return dateStr
+}
