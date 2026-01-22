@@ -10,9 +10,9 @@ func (s *Service) sendLoginRequest(formData map[string]string) (int, error) {
 	s.client.SetRedirectPolicy(resty.NoRedirectPolicy())
 
 	resp, err := s.client.R().
-		SetHeader("Referer", "https://pay.ahut.edu.cn/Account/Login").
+		SetHeader("Referer", LoginURL).
 		SetFormData(formData).
-		Post("https://pay.ahut.edu.cn/Account/LoginService")
+		Post(LoginServiceURL)
 
 	if err != nil {
 		return 0, err
@@ -33,9 +33,9 @@ func (s *Service) sendLoginRequest(formData map[string]string) (int, error) {
 // sendGetGradesRequest 获取成绩信息
 func (s *Service) sendGetIMSRequest(formData map[string]string) ([]byte, error) {
 	resp, err := s.client.R().
-		SetHeader("Referer", "https://pay.ahut.edu.cn/Charge/IMS?state=WXSTATEFLAG").
+		SetHeader("Referer", IMSURL).
 		SetFormData(formData).
-		Post("https://pay.ahut.edu.cn/Charge/GetIMS_AHUTService")
+		Post(IMSServiceURL)
 
 	if err != nil {
 		return nil, err

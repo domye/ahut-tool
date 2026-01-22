@@ -11,7 +11,7 @@ func (s *Service) sendLoginRequest(formData map[string]string) (int, error) {
 	s.client.SetRedirectPolicy(resty.NoRedirectPolicy())
 	resp, err := s.client.R().
 		SetFormData(formData).
-		Post("http://jwxt.ahut.edu.cn/jsxsd/xk/LoginToXk")
+		Post(LoginURL)
 	var cookie string
 	for _, i := range resp.Cookies() {
 		cookie += fmt.Sprintf("%s=%s; ", i.Name, i.Value)
@@ -28,7 +28,7 @@ func (s *Service) sendLoginRequest(formData map[string]string) (int, error) {
 func (s *Service) sendGetGradesRequest(formData map[string]string) (string, error) {
 	resp, err := s.client.R().
 		SetFormData(formData).
-		Post("http://jwxt.ahut.edu.cn/jsxsd/kscj/cjcx_list")
+		Post(GradesURL)
 
 	if err != nil {
 		return "", err
@@ -41,7 +41,7 @@ func (s *Service) sendGetGradesRequest(formData map[string]string) (string, erro
 func (s *Service) sendGetClassesRequest(formData map[string]string) (string, error) {
 	resp, err := s.client.R().
 		SetFormData(formData).
-		Post("http://jwxt.ahut.edu.cn/jsxsd/xskb/xskb_list.do")
+		Post(ClassesURL)
 
 	if err != nil {
 		return "", err
