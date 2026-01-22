@@ -2,11 +2,18 @@
   <div class="schedule-container">
     <div class="schedule-header">
       <h2 class="page-title">课程表</h2>
-      <div class="semester-selector">
-        <select v-model="scheduleStore.currentSemester" @change="handleSemesterChange" class="neumorphic-select">
-          <option value="2025-2026-1">2025-2026 第一学期</option>
-          <option value="2025-2026-2">2025-2026 第二学期</option>
-        </select>
+      <div class="selectors">
+        <div class="semester-selector">
+          <select v-model="scheduleStore.currentSemester" @change="handleSemesterChange" class="neumorphic-select">
+            <option value="2025-2026-1">2025-2026 第一学期</option>
+            <option value="2025-2026-2">2025-2026 第二学期</option>
+          </select>
+        </div>
+        <div class="week-selector">
+          <div class="week-info">第 {{ scheduleStore.currentWeek }} 周</div>
+          <button @click="handlePrevWeek" class="neumorphic-btn week-btn">上一周</button>
+          <button @click="handleNextWeek" class="neumorphic-btn week-btn">下一周</button>
+        </div>
       </div>
     </div>
 
@@ -64,6 +71,18 @@ const scheduleStore = useScheduleStore()
 const weekDays = ['周一', '周二', '周三', '周四', '周五']
 const periods = ['1-2', '3-4', '5-6', '7-8', '9-10-11']
 
+// 处理上一周
+function handlePrevWeek() {
+  if (scheduleStore.currentWeek > 1) {
+    scheduleStore.setCurrentWeek(scheduleStore.currentWeek - 1)
+  }
+}
+
+// 处理下一周
+function handleNextWeek() {
+  scheduleStore.setCurrentWeek(scheduleStore.currentWeek + 1)
+}
+
 // 为每门课程生成马卡龙色系颜色
 const courseColors = computed(() => {
   const colors: { [key: string]: string } = {}
@@ -114,14 +133,14 @@ function getCourseColor(courseName: string): string {
 
 // 检查某个时间段是否有课程
 function hasCourse(day: number, period: string): boolean {
-  return scheduleStore.classes.some(course => {
+  return scheduleStore.filteredClasses.some(course => {
     return course.dayOfWeek === day && course.period === period
   })
 }
 
 // 获取某个时间段的课程
 function getCourse(day: number, period: string) {
-  return scheduleStore.classes.filter(course => {
+  return scheduleStore.filteredClasses.filter(course => {
     return course.dayOfWeek === day && course.period === period
   })
 }
@@ -163,10 +182,52 @@ onMounted(() => {
   font-weight: 600;
 }
 
+.selectors {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
 .semester-selector {
   display: flex;
   align-items: center;
   gap: 12px;
+}
+
+.week-selector {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.week-info {
+  padding: 10px 16px;
+  border-radius: 12px;
+  background-color: #e0e5ec;
+  color: #4a5568;
+  font-size: 1rem;
+  font-weight: 500;
+  box-shadow: 6px 6px 10px 0 rgba(163,177,198, 0.7), -6px -6px 10px 0 rgba(255,255,255, 0.7);
+}
+
+.week-btn {
+  padding: 10px 16px;
+  border-radius: 12px;
+  border: none;
+  background-color: #e0e5ec;
+  color: #4a5568;
+  font-size: 0.9rem;
+  box-shadow: 6px 6px 10px 0 rgba(163,177,198, 0.7), -6px -6px 10px 0 rgba(255,255,255, 0.7);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.week-btn:hover {
+  box-shadow: 4px 4px 8px 0 rgba(163,177,198, 0.7), -4px -4px 8px 0 rgba(255,255,255, 0.7);
+}
+
+.week-btn:active {
+  box-shadow: inset 4px 4px 8px 0 rgba(163,177,198, 0.7), inset -4px -4px 8px 0 rgba(255,255,255, 0.7);
 }
 
 .neumorphic-select {
@@ -344,11 +405,26 @@ onMounted(() => {
     align-items: flex-start;
   }
 
+  .selectors {
+    width: 100%;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
   .semester-selector {
     width: 100%;
   }
 
+  .week-selector {
+    width: 100%;
+    justify-content: space-between;
+  }
+
   .neumorphic-select {
+    flex: 1;
+  }
+
+  .week-btn {
     flex: 1;
   }
 

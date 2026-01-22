@@ -12,6 +12,17 @@ import (
 	"github.com/PuerkitoBio/goquery"
 )
 
+// 预编译正则表达式以提高性能
+var (
+	periodRegexp      = regexp.MustCompile(`第([0-9,,-]+)节`)
+	fontTagRegexp     = regexp.MustCompile(`(?i)<font[^>]*title\s*=\s*['"]([^'"]*)['"][^>]*>(.*?)</font>`)
+	fullWeekRegexp    = regexp.MustCompile(`([\d,-]+)\(周\)`)
+	rangeWeekRegexp   = regexp.MustCompile(`(\d+)-(\d+)\(周\)`)
+	numWeekRegexp     = regexp.MustCompile(`\d+`)
+	htmlTagRegexp     = regexp.MustCompile(`<[^>]*>`)
+	courseSplitRegexp = regexp.MustCompile(`-{5,}`) // 用于分割多门课程的分隔符
+)
+
 // ParseClassSchedule 从HTML中解析课程表信息
 func ParseClassSchedule(html string) ([]models.Class, error) {
 	var classes []models.Class
@@ -52,42 +63,14 @@ func ParseClassSchedule(html string) ([]models.Class, error) {
 				}
 
 				// 检查是否包含多门课程（用"---------------------"分隔）
-				if strings.Contains(content, "---------------------") {
+				if courseSplitRegexp.MatchString(content) {
 					// 分割多门课程
-					for _, coursePart := range strings.Split(content, "---------------------") {
-						classInfo := parseDetailedClassInfo(coursePart, dayOfWeek, period)
-						if classInfo.Name != "" {
-							// 生成唯一键值用于去重（不包含周次）
-							key := fmt.Sprintf("%s_%d_%s_%s_%s", classInfo.Name, classInfo.DayOfWeek, classInfo.Period, classInfo.Teacher, classInfo.Classroom)
-
-							// 检查是否已存在相同课程
-							if existingClass, exists := existingCoursesMap[key]; exists {
-								// 合并周次信息
-								existingClass.WeekNumbers = mergeWeekRanges(existingClass.WeekNumbers, classInfo.WeekNumbers)
-							} else {
-								// 添加新课程
-								classes = append(classes, classInfo)
-								existingCoursesMap[key] = &classes[len(classes)-1]
-							}
-						}
+					for _, coursePart := range courseSplitRegexp.Split(content, -1) {
+						processCoursePart(coursePart, dayOfWeek, period, &classes, existingCoursesMap)
 					}
 				} else {
 					// 单门课程
-					classInfo := parseDetailedClassInfo(content, dayOfWeek, period)
-					if classInfo.Name != "" {
-						// 生成唯一键值用于去重（不包含周次）
-						key := fmt.Sprintf("%s_%d_%s_%s_%s", classInfo.Name, classInfo.DayOfWeek, classInfo.Period, classInfo.Teacher, classInfo.Classroom)
-
-						// 检查是否已存在相同课程
-						if existingClass, exists := existingCoursesMap[key]; exists {
-							// 合并周次信息
-							existingClass.WeekNumbers = mergeWeekRanges(existingClass.WeekNumbers, classInfo.WeekNumbers)
-						} else {
-							// 添加新课程
-							classes = append(classes, classInfo)
-							existingCoursesMap[key] = &classes[len(classes)-1]
-						}
-					}
+					processCoursePart(content, dayOfWeek, period, &classes, existingCoursesMap)
 				}
 			})
 		})
@@ -96,11 +79,41 @@ func ParseClassSchedule(html string) ([]models.Class, error) {
 	return classes, nil
 }
 
+// processCoursePart 处理单个课程部分
+func processCoursePart(coursePart string, dayOfWeek int, period string, classes *[]models.Class, existingCoursesMap map[string]*models.Class) {
+	classInfo := parseDetailedClassInfo(coursePart, dayOfWeek, period)
+	if classInfo.Name == "" {
+		return
+	}
+
+	// 生成唯一键值用于去重（不包含周次）
+	key := generateCourseKey(classInfo)
+
+	// 更新或添加课程
+	updateOrAddCourse(classInfo, key, classes, existingCoursesMap)
+}
+
+// generateCourseKey 生成课程唯一键
+func generateCourseKey(classInfo models.Class) string {
+	return fmt.Sprintf("%s_%d_%s_%s_%s",
+		classInfo.Name, classInfo.DayOfWeek, classInfo.Period, classInfo.Teacher, classInfo.Classroom)
+}
+
+// updateOrAddCourse 更新现有课程或添加新课程
+func updateOrAddCourse(classInfo models.Class, key string, classes *[]models.Class, existingCoursesMap map[string]*models.Class) {
+	if existingClass, exists := existingCoursesMap[key]; exists {
+		// 合并周次信息
+		existingClass.WeekNumbers = mergeWeekRanges(existingClass.WeekNumbers, classInfo.WeekNumbers)
+	} else { // 添加新课程
+		*classes = append(*classes, classInfo)
+		existingCoursesMap[key] = &(*classes)[len(*classes)-1]
+	}
+}
+
 // extractPeriod 从节次文本中提取节次信息
 func extractPeriod(periodText string) string {
 	// 匹配"第X,Y节"或"第X-Y节"的模式
-	re := regexp.MustCompile(`第([0-9,,-]+)节`)
-	matches := re.FindStringSubmatch(periodText)
+	matches := periodRegexp.FindStringSubmatch(periodText)
 	if len(matches) > 1 {
 		result := strings.ReplaceAll(matches[1], ",", "-")
 		return result
@@ -113,18 +126,34 @@ func parseDetailedClassInfo(contentHtml string, dayOfWeek int, period string) mo
 	var classInfo models.Class
 
 	// 处理换行符和清理无用标签
-	content := strings.NewReplacer(
+	content := preprocessContent(contentHtml)
+
+	// 提取font标签信息
+	extractFontInfo(content, &classInfo)
+
+	// 提取课程名称
+	extractClassName(content, &classInfo)
+
+	classInfo.DayOfWeek = dayOfWeek
+	classInfo.Period = period
+
+	return classInfo
+}
+
+// preprocessContent 预处理内容
+func preprocessContent(contentHtml string) string {
+	return strings.NewReplacer(
 		"<br/>", "<br>",
 		"<br />", "<br>",
 		"<br >", "<br>",
 		"\t", "",
 	).Replace(contentHtml)
+}
 
-	// 使用正则表达式提取font标签及其内容
-	fontRe := regexp.MustCompile(`(?i)<font[^>]*title\s*=\s*['"]([^'"]*)['"][^>]*>(.*?)</font>`)
-	fontMatches := fontRe.FindAllStringSubmatch(content, -1)
+// extractFontInfo 提取font标签信息
+func extractFontInfo(content string, classInfo *models.Class) {
+	fontMatches := fontTagRegexp.FindAllStringSubmatch(content, -1)
 
-	// 根据索引位置提取信息: 0是教师，1是周次，2是教室
 	for i, match := range fontMatches {
 		if len(match) < 3 {
 			continue
@@ -142,97 +171,114 @@ func parseDetailedClassInfo(contentHtml string, dayOfWeek int, period string) mo
 			classInfo.Classroom = cleanText(text)
 		}
 	}
+}
 
-	// 处理剩余内容，提取课程名称
+// extractClassName 提取课程名称
+func extractClassName(content string, classInfo *models.Class) {
 	for _, part := range strings.Split(content, "<br>") {
 		cleanPart := cleanText(part)
 		// 清理HTML标签
 		cleanPart = removeHtmlTags(cleanPart)
 		// 跳过分隔线
-		if cleanPart != "" && cleanPart != "&nbsp;" && !strings.Contains(cleanPart, "------") {
+		if isValidClassName(cleanPart) {
 			classInfo.Name = cleanPart
 			break
 		}
 	}
+}
 
-	classInfo.DayOfWeek = dayOfWeek
-	classInfo.Period = period
-
-	return classInfo
+// isValidClassName 判断是否为有效的课程名称
+func isValidClassName(cleanPart string) bool {
+	return cleanPart != "" && cleanPart != "&nbsp;" && !strings.Contains(cleanPart, "------")
 }
 
 // extractWeekNumbers 从文本中提取周次信息
 func extractWeekNumbers(text string) string {
-	// 匹配周次信息，如"1-16(周)"或"1-11,13-14(周)"或"1-12,14(周)"
-	fullRe := regexp.MustCompile(`([\d,-]+)\(周\)`)
-	fullMatches := fullRe.FindStringSubmatch(text)
+	// 尝试匹配完整周次格式，如"1-16(周)"或"1-11,13-14(周)"或"1-12,14(周)"
+	if result := extractFullWeekFormat(text); result != "" {
+		return result
+	}
 
+	// 尝试匹配范围格式，如"X-Y(周)"
+	if result := extractRangeWeekFormat(text); result != "" {
+		return result
+	}
+
+	// 尝试匹配单独的数字
+	return extractNumberWeekFormat(text)
+}
+
+// extractFullWeekFormat 提取完整周次格式
+func extractFullWeekFormat(text string) string {
+	fullMatches := fullWeekRegexp.FindStringSubmatch(text)
 	if len(fullMatches) >= 2 {
-		// 提取周次部分，如"1-11,13-14"或"1-12,14"
-		return fullMatches[1]
+		return fullMatches[1] // 提取周次部分，如"1-11,13-14"或"1-12,14"
 	}
-
-	// 如果没有匹配到完整格式，尝试匹配"X-Y(周)"模式
-	re := regexp.MustCompile(`(\d+)-(\d+)\(周\)`)
-	matches := re.FindAllStringSubmatch(text, -1)
-
-	if len(matches) > 0 {
-		// 提取所有周次范围
-		var allWeeks []int
-		for _, match := range matches {
-			if len(match) >= 3 {
-				start, _ := strconv.Atoi(match[1])
-				end, _ := strconv.Atoi(match[2])
-				for w := start; w <= end; w++ {
-					allWeeks = append(allWeeks, w)
-				}
-			}
-		}
-
-		// 去重并排序
-		uniqueWeeks := uniqueSortedInts(allWeeks)
-
-		// 将周次转换为范围字符串
-		return buildWeekRanges(uniqueWeeks)
-	}
-
-	// 如果没有匹配到范围，尝试匹配单独的数字
-	numRe := regexp.MustCompile(`\d+`)
-	numbers := numRe.FindAllString(text, -1)
-
-	if len(numbers) > 0 {
-		var weeks []int
-		seen := make(map[int]bool)
-
-		for _, numStr := range numbers {
-			if num, err := strconv.Atoi(numStr); err == nil && num >= 1 && num <= 30 && !seen[num] {
-				seen[num] = true
-				weeks = append(weeks, num)
-			}
-		}
-
-		if len(weeks) == 0 {
-			return ""
-		}
-
-		// 排序并构建范围
-		sort.Ints(weeks)
-		return buildWeekRanges(weeks)
-	}
-
 	return ""
 }
 
-// uniqueSortedInts 去重并排序整数切片
-func uniqueSortedInts(nums []int) []int {
-	seen := make(map[int]bool)
-	var result []int
+// extractRangeWeekFormat 提取范围周次格式
+func extractRangeWeekFormat(text string) string {
+	matches := rangeWeekRegexp.FindAllStringSubmatch(text, -1)
+	if len(matches) == 0 {
+		return ""
+	}
 
-	for _, num := range nums {
-		if !seen[num] {
-			seen[num] = true
-			result = append(result, num)
+	var allWeeks []int
+	for _, match := range matches {
+		if len(match) >= 3 {
+			start, _ := strconv.Atoi(match[1])
+			end, _ := strconv.Atoi(match[2])
+			for w := start; w <= end; w++ {
+				allWeeks = append(allWeeks, w)
+			}
 		}
+	}
+
+	uniqueWeeks := uniqueSortedIntsWithoutAlloc(allWeeks)
+	return buildWeekRanges(uniqueWeeks)
+}
+
+// extractNumberWeekFormat 提取数字周次格式
+func extractNumberWeekFormat(text string) string {
+	numbers := numWeekRegexp.FindAllString(text, -1)
+	if len(numbers) == 0 {
+		return ""
+	}
+
+	var weeks []int
+	seen := make(map[int]bool)
+	for _, numStr := range numbers {
+		if num, err := strconv.Atoi(numStr); err == nil && num >= 1 && num <= 30 && !seen[num] {
+			seen[num] = true
+			weeks = append(weeks, num)
+		}
+	}
+
+	if len(weeks) == 0 {
+		return ""
+	}
+
+	sort.Ints(weeks)
+	return buildWeekRanges(weeks)
+}
+
+// uniqueSortedIntsWithoutAlloc 去重并排序整数切片，优化内存分配
+func uniqueSortedIntsWithoutAlloc(nums []int) []int {
+	if len(nums) == 0 {
+		return nums
+	}
+
+	// 使用哈希集合去重，提供O(1)的查找时间
+	seen := make(map[int]bool)
+	for _, num := range nums {
+		seen[num] = true
+	}
+
+	// 将唯一的数字复制到结果切片
+	result := make([]int, 0, len(seen))
+	for num := range seen {
+		result = append(result, num)
 	}
 
 	sort.Ints(result)
@@ -249,7 +295,8 @@ func buildWeekRanges(weeks []int) string {
 		return strconv.Itoa(weeks[0])
 	}
 
-	var result []string
+	// 使用strings.Builder优化字符串连接性能
+	var builder strings.Builder
 	start := weeks[0]
 	end := weeks[0]
 
@@ -260,10 +307,11 @@ func buildWeekRanges(weeks []int) string {
 		} else {
 			// 不连续的周次，保存当前范围
 			if start == end {
-				result = append(result, strconv.Itoa(start))
+				builder.WriteString(strconv.Itoa(start))
 			} else {
-				result = append(result, fmt.Sprintf("%d-%d", start, end))
+				builder.WriteString(fmt.Sprintf("%d-%d", start, end))
 			}
+			builder.WriteByte(',')
 			start = weeks[i]
 			end = weeks[i]
 		}
@@ -271,12 +319,12 @@ func buildWeekRanges(weeks []int) string {
 
 	// 添加最后一个范围
 	if start == end {
-		result = append(result, strconv.Itoa(start))
+		builder.WriteString(strconv.Itoa(start))
 	} else {
-		result = append(result, fmt.Sprintf("%d-%d", start, end))
+		builder.WriteString(fmt.Sprintf("%d-%d", start, end))
 	}
 
-	return strings.Join(result, ",")
+	return builder.String()
 }
 
 // cleanText 清理文本
@@ -289,9 +337,8 @@ func cleanText(text string) string {
 
 // removeHtmlTags 去除HTML标签
 func removeHtmlTags(text string) string {
-	// 使用正则表达式去除HTML标签
-	re := regexp.MustCompile(`<[^>]*>`)
-	text = re.ReplaceAllString(text, "")
+	// 使用预编译正则表达式去除HTML标签
+	text = htmlTagRegexp.ReplaceAllString(text, "")
 	// 去除多余的"P"标记（通常表示实践课）
 	text = strings.ReplaceAll(text, " P", "")
 	text = strings.ReplaceAll(text, "P", "")
@@ -314,39 +361,52 @@ func mergeWeekRanges(range1, range2 string) string {
 	// 解析第二个周次范围
 	weeks2 := parseWeekRange(range2)
 
-	// 合并两个周次数组
-	merged := append(weeks1, weeks2...)
+	// 使用哈希集合去重，合并两个周次数组
+	seen := make(map[int]bool)
+	for _, week := range weeks1 {
+		seen[week] = true
+	}
+	for _, week := range weeks2 {
+		seen[week] = true
+	}
 
-	// 去重并排序
-	uniqueWeeks := uniqueSortedInts(merged)
+	// 将唯一的周次复制到结果切片
+	merged := make([]int, 0, len(seen))
+	for week := range seen {
+		merged = append(merged, week)
+	}
 
-	// 构建周次范围字符串
-	return buildWeekRanges(uniqueWeeks)
+	// 排序并构建周次范围字符串
+	sort.Ints(merged)
+	return buildWeekRanges(merged)
 }
 
 // parseWeekRange 解析周次范围字符串，返回所有周次的数组
 func parseWeekRange(weekRange string) []int {
-	var weeks []int
+	// 预分配容量以减少内存重新分配
+	weeks := make([]int, 0, len(weekRange)/2)
 
 	// 分割多个范围，如"1-9,11-12"
 	ranges := strings.Split(weekRange, ",")
 
 	for _, r := range ranges {
+		r = strings.TrimSpace(r)
 		// 检查是否是范围，如"1-9"
-		if strings.Contains(r, "-") {
-			parts := strings.Split(r, "-")
-			if len(parts) == 2 {
-				start, err1 := strconv.Atoi(strings.TrimSpace(parts[0]))
-				end, err2 := strconv.Atoi(strings.TrimSpace(parts[1]))
-				if err1 == nil && err2 == nil {
-					for w := start; w <= end; w++ {
-						weeks = append(weeks, w)
-					}
+		hyphenIndex := strings.Index(r, "-")
+		if hyphenIndex != -1 {
+			startStr := r[:hyphenIndex]
+			endStr := r[hyphenIndex+1:]
+			start, err1 := strconv.Atoi(strings.TrimSpace(startStr))
+			end, err2 := strconv.Atoi(strings.TrimSpace(endStr))
+			if err1 == nil && err2 == nil {
+				// 预计算范围大小并预先扩展切片
+				for w := start; w <= end; w++ {
+					weeks = append(weeks, w)
 				}
 			}
 		} else {
 			// 单个周次
-			if week, err := strconv.Atoi(strings.TrimSpace(r)); err == nil {
+			if week, err := strconv.Atoi(r); err == nil {
 				weeks = append(weeks, week)
 			}
 		}
