@@ -100,17 +100,15 @@
 import { ref, onMounted, computed } from 'vue'
 import { useScheduleStore } from '../store/schedule'
 import { LeftOutlined, RightOutlined, ReloadOutlined } from '@ant-design/icons-vue'
+import { generateSemesterOptions } from '../utils/semester'
 
 const scheduleStore = useScheduleStore()
 
 const weekDays = ['周一', '周二', '周三', '周四', '周五']
 const periods = ['1-2', '3-4', '5-6', '7-8', '9-10-11']
 
-// 学期选项
-const semesterOptions = [
-  { value: '2025-2026-1', label: '2025-2026 第一学期' },
-  { value: '2025-2026-2', label: '2025-2026 第二学期' }
-]
+// 学期选项 - 使用工具类生成前后各2年的学期选项
+const semesterOptions = computed(() => generateSemesterOptions(2))
 
 // 处理上一周
 function handlePrevWeek() {
