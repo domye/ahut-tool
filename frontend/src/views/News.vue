@@ -46,12 +46,13 @@ interface Tab {
 }
 
 const tabs: Tab[] = [
+  { id: 'summary', name: '全部新闻' },
   { id: 'school', name: '学校新闻' },
   { id: 'academic', name: '学术通知' },
   { id: 'announcement', name: '公告通知' }
 ]
 
-const activeTab = ref<string>('school')
+const activeTab = ref<string>('summary')
 const loading = ref<boolean>(false)
 const error = ref<string>('')
 const schoolNews = ref<models.News[]>([])
@@ -107,6 +108,13 @@ async function fetchAnnouncementNews() {
 
 function updateCurrentNews() {
   switch (activeTab.value) {
+    case 'summary':
+      // 合并所有新闻并按日期排序
+      const allNews = [...schoolNews.value, ...academicNews.value, ...announcementNews.value]
+      currentNews.value = allNews.sort((a, b) => {
+        return new Date(b.date).getTime() - new Date(a.date).getTime()
+      })
+      break
     case 'school':
       currentNews.value = schoolNews.value
       break
@@ -121,16 +129,30 @@ function updateCurrentNews() {
 
 function handleTabChange(tabId: string) {
   activeTab.value = tabId
-  updateCurrentNews()
 
-  // 如果该标签页的数据还未加载，则加载对应数据
-  if (tabId === 'school' && schoolNews.value.length === 0) {
-    fetchSchoolNews()
-  } else if (tabId === 'academic' && academicNews.value.length === 0) {
-    fetchAcademicNews()
-  } else if (tabId === 'announcement' && announcementNews.value.length === 0) {
-    fetchAnnouncementNews()
+  // 如果切换到汇总tab，需要确保所有数据都已加载
+  if (tabId === 'summary') {
+    if (schoolNews.value.length === 0) {
+      fetchSchoolNews()
+    }
+    if (academicNews.value.length === 0) {
+      fetchAcademicNews()
+    }
+    if (announcementNews.value.length === 0) {
+      fetchAnnouncementNews()
+    }
+  } else {
+    // 如果该标签页的数据还未加载，则加载对应数据
+    if (tabId === 'school' && schoolNews.value.length === 0) {
+      fetchSchoolNews()
+    } else if (tabId === 'academic' && academicNews.value.length === 0) {
+      fetchAcademicNews()
+    } else if (tabId === 'announcement' && announcementNews.value.length === 0) {
+      fetchAnnouncementNews()
+    }
   }
+
+  updateCurrentNews()
 }
 
 function openNewsUrl(url: string) {
@@ -138,7 +160,10 @@ function openNewsUrl(url: string) {
 }
 
 onMounted(() => {
+  // 加载所有新闻数据
   fetchSchoolNews()
+  fetchAcademicNews()
+  fetchAnnouncementNews()
 })
 </script>
 
@@ -248,9 +273,6 @@ onMounted(() => {
   font-size: 0.95rem;
   color: #718096;
   line-height: 1.6;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+  min-height: 60px;
 }
 </style>
