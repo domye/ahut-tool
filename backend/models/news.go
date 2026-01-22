@@ -1,7 +1,7 @@
 package models
 
 // News 新闻信息结构体
-type news struct {
+type News struct {
 	Title   string `json:"title"`   // 新闻标题
 	Content string `json:"content"` // 新闻内容
 	Date    string `json:"date"`    // 新闻发布日期

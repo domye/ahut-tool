@@ -13,7 +13,6 @@ import (
 // 预编译正则表达式以提高性能
 var (
 	summaryRegex = regexp.MustCompile(`所修门数:(\d+) 所修总学分:([\d.]+) 平均学分绩点:([\d.]+) 平均成绩:([\d.]+)`)
-	whitespaceRe = regexp.MustCompile(`\s+`)
 )
 
 // ParseGrades 从HTML中解析成绩信息
@@ -85,28 +84,6 @@ func ParseGrades(html string) ([]models.Grade, *models.GradeSummary, error) {
 	return grades, &summary, nil
 }
 
-// normalizeText 规范化文本（去除多余空白字符）
-func normalizeText(s string) string {
-	s = strings.TrimSpace(s)
-	return whitespaceRe.ReplaceAllString(s, " ")
-}
-
-// parseInt 将字符串转换为整数
-func parseInt(s string) int {
-	s = strings.TrimSpace(s)
-	i, err := strconv.Atoi(s)
-	if err != nil {
-		return 0
-	}
-	return i
-}
-
-// parseFloat 将字符串转换为浮点数
-func parseFloat(s string) float64 {
-	s = strings.TrimSpace(s)
-	f, err := strconv.ParseFloat(s, 64)
-	if err != nil {
-		return 0
-	}
-	return f
-}
+// normalizeText 已移至 common.go
+// parseInt 已移至 common.go
+// parseFloat 已移至 common.go

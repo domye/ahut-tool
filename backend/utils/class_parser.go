@@ -19,7 +19,6 @@ var (
 	fullWeekRegexp    = regexp.MustCompile(`([\d,-]+)\(周\)`)
 	rangeWeekRegexp   = regexp.MustCompile(`(\d+)-(\d+)\(周\)`)
 	numWeekRegexp     = regexp.MustCompile(`\d+`)
-	htmlTagRegexp     = regexp.MustCompile(`<[^>]*>`)
 	courseSplitRegexp = regexp.MustCompile(`-{5,}`) // 用于分割多门课程的分隔符
 )
 
@@ -327,25 +326,8 @@ func buildWeekRanges(weeks []int) string {
 	return builder.String()
 }
 
-// cleanText 清理文本
-func cleanText(text string) string {
-	text = strings.TrimSpace(text)
-	text = strings.ReplaceAll(text, "&nbsp;", "")
-	text = strings.Trim(text, ":： ")
-	return text
-}
-
-// removeHtmlTags 去除HTML标签
-func removeHtmlTags(text string) string {
-	// 使用预编译正则表达式去除HTML标签
-	text = htmlTagRegexp.ReplaceAllString(text, "")
-	// 去除多余的"P"标记（通常表示实践课）
-	text = strings.ReplaceAll(text, " P", "")
-	text = strings.ReplaceAll(text, "P", "")
-	// 清理多余的空格
-	text = strings.TrimSpace(text)
-	return text
-}
+// cleanText 已移至 common.go
+// removeHtmlTags 已移至 common.go
 
 // mergeWeekRanges 合并两个周次范围字符串
 func mergeWeekRanges(range1, range2 string) string {
