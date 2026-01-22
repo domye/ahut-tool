@@ -33,7 +33,7 @@ const tools = [
   { id: 'dining', name: '食堂查询', icon: '🍽️', status: 'dev' },
   { id: 'bus', name: '校车时刻', icon: '🚌', status: 'dev' },
   { id: 'activities', name: '校园活动', icon: '🎉', status: 'dev' },
-  { id: 'news', name: '校园新闻', icon: '📰', status: 'dev' }
+  { id: 'news', name: '校园新闻', icon: '📰', status: 'ready' }
 ]
 
 function handleToolClick(tool: any) {
@@ -43,6 +43,8 @@ function handleToolClick(tool: any) {
     router.push('/main/electricity')
   } else if (tool.status === 'ready' && tool.id === 'schedule') {
     router.push('/main/schedule')
+  } else if (tool.status === 'ready' && tool.id === 'news') {
+    router.push('/main/news')
   } else {
     router.push('/main/coming-soon')
   }
