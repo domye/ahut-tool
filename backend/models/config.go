@@ -17,3 +17,15 @@ type PayConfig struct {
 	User     string `yaml:"user"`
 	Password string `yaml:"password"`
 }
+
+// SchedulesConfig 课程表默认节次配置
+type SchedulesConfig struct {
+	DefaultSchedule string `json:"defaultSchedule"`
+}
+
+// DormConfig 宿舍配置
+type DormConfig struct {
+	Campus     string `json:"campus"`
+	BuildingId string `json:"buildingId"`
+	RoomId     string `json:"roomId"`
+}
