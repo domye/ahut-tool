@@ -1,4 +1,4 @@
-package config
+package jwxt
 
 import (
 	"ahut-tool/backend/models"
@@ -6,16 +6,8 @@ import (
 	"fmt"
 )
 
-// ClassCacheService 课程表缓存服务
-type ClassCacheService struct{}
-
-// NewClassCacheService 创建新的课程表缓存服务实例
-func NewClassCacheService() *ClassCacheService {
-	return &ClassCacheService{}
-}
-
 // SaveClassSchedule 保存课程表数据
-func (s *ClassCacheService) SaveClassSchedule(xnxq string, classes []models.Class) error {
+func (s *Service) SaveClassSchedule(xnxq string, classes []models.Class) error {
 	// 构造文件名
 	filename := fmt.Sprintf("class_schedule_%s.json", xnxq)
 
@@ -29,7 +21,7 @@ func (s *ClassCacheService) SaveClassSchedule(xnxq string, classes []models.Clas
 }
 
 // LoadClassSchedule 加载课程表数据
-func (s *ClassCacheService) LoadClassSchedule(xnxq string) ([]models.Class, error) {
+func (s *Service) LoadClassSchedule(xnxq string) ([]models.Class, error) {
 	// 构造文件名
 	filename := fmt.Sprintf("class_schedule_%s.json", xnxq)
 
@@ -49,7 +41,7 @@ func (s *ClassCacheService) LoadClassSchedule(xnxq string) ([]models.Class, erro
 }
 
 // HasClassSchedule 检查是否存在指定学期的课程表缓存
-func (s *ClassCacheService) HasClassSchedule(xnxq string) bool {
+func (s *Service) HasClassSchedule(xnxq string) bool {
 	// 构造文件名
 	filename := fmt.Sprintf("class_schedule_%s.json", xnxq)
 
