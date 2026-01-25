@@ -1,11 +1,5 @@
 package models
 
-// Config 应用程序配置
-type Config struct {
-	Jwxt JWXTConfig `yaml:"jwxt"`
-	Pay  PayConfig  `yaml:"pay"`
-}
-
 // JWXTConfig 教务系统配置
 type JWXTConfig struct {
 	User     string `yaml:"user"`
@@ -21,6 +15,7 @@ type PayConfig struct {
 // SchedulesConfig 课程表默认节次配置
 type SchedulesConfig struct {
 	DefaultSchedule string `json:"defaultSchedule"`
+	StartDate       string `json:"startDate"`
 }
 
 // DormConfig 宿舍配置

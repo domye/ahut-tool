@@ -43,3 +43,16 @@ func (a *App) GetClassSchedule(xnxq string) (*models.ClassScheduleResponse, erro
 	// 从本地缓存中未找到，调用导入方法
 	return a.ImportClassSchedule(xnxq)
 }
+
+func (a *App) SettingSchedules(xnxq, StartDate string) {
+	var config = models.SchedulesConfig{
+		DefaultSchedule: xnxq,
+		StartDate:       StartDate,
+	}
+	JwxtInstance.SaveSchedulesConfig(config)
+}
+
+func (a *App) LoadSchedulesSetting() models.SchedulesConfig {
+	config := JwxtInstance.LoadSchedulesConfig()
+	return config
+}
