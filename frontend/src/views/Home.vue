@@ -1,6 +1,7 @@
 <template>
   <div class="home-container">
-    <h1 class="page-title">欢迎使用安徽工业大学生活工具</h1>
+    <h1 class="page-title">安徽工业大学 · 校园生活助手</h1>
+    <p class="page-intro">一站式解决您的校园生活需求，让学习与生活更加便捷高效</p>
 
     <div class="tools-grid">
       <div 
@@ -28,12 +29,11 @@ const tools = [
   { id: 'grades', name: '成绩查询', icon: '📊', status: 'ready' },
   { id: 'electricity', name: '电费查询', icon: '⚡', status: 'ready' },
   { id: 'schedule', name: '课程表', icon: '📅', status: 'ready' },
+  { id: 'news', name: '校园新闻', icon: '📰', status: 'ready' },
   { id: 'library', name: '图书馆', icon: '📚', status: 'dev' },
   { id: 'campus', name: '校园地图', icon: '🗺️', status: 'dev' },
   { id: 'dining', name: '食堂查询', icon: '🍽️', status: 'dev' },
-  { id: 'bus', name: '校车时刻', icon: '🚌', status: 'dev' },
-  { id: 'activities', name: '校园活动', icon: '🎉', status: 'dev' },
-  { id: 'news', name: '校园新闻', icon: '📰', status: 'ready' }
+  { id: 'bus', name: '校车时刻', icon: '🚌', status: 'dev' }
 ]
 
 function handleToolClick(tool: any) {
@@ -61,9 +61,19 @@ function handleToolClick(tool: any) {
 .page-title {
   font-size: 2rem;
   color: #4a5568;
-  margin-bottom: 32px;
+  margin-bottom: 16px;
   text-align: center;
   font-weight: 600;
+}
+
+.page-intro {
+  font-size: 1.1rem;
+  color: #718096;
+  text-align: center;
+  margin-bottom: 32px;
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .tools-grid {

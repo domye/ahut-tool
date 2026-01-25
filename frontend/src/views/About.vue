@@ -6,8 +6,9 @@
       <div class="about-section">
         <h2 class="section-title">项目介绍</h2>
         <p class="section-content">
-          安徽工业大学生活工具是一个专为安徽工业大学师生设计的综合服务平台，旨在提供便捷的校园生活服务。
-          本项目整合了校园内常用的功能模块，为师生提供一站式的校园生活解决方案。
+          安徽工业大学生活工具是一款专为安徽工业大学师生打造的智慧校园服务平台，致力于用科技赋能校园生活。
+          我们深入理解师生日常需求，将分散的校园服务整合于一体，打造全方位、个性化的数字生活助手。
+          通过简洁直观的界面设计与流畅的交互体验，让每一位师生都能轻松享受便捷高效的校园服务。
         </p>
       </div>
 
@@ -28,8 +29,11 @@
       <div class="about-section">
         <h2 class="section-title">技术特点</h2>
         <p class="section-content">
-          本项目采用现代化的Web技术栈开发，界面采用新拟态(Neumorphism)设计风格，提供流畅的用户体验。
-          前端使用Vue 3框架，后端采用高性能的服务架构，确保系统稳定可靠。
+          本项目采用Wails框架构建，将Web技术栈与Go语言后端完美结合，打造高性能的桌面应用程序。
+          前端基于Vue 3框架，运用Composition API进行组件化开发，配合TypeScript提升代码质量与可维护性。
+          采用Ant Design Vue组件库，提供美观一致的用户界面，并融入新拟态(Neumorphism)设计风格，带来流畅自然的交互体验。
+          后端使用Go语言开发，利用其高效的并发处理能力和简洁的语法，确保系统运行稳定可靠。
+          通过Wails的绑定机制，实现前后端无缝通信，数据交互快速高效，为师生提供便捷的桌面端校园服务体验。
         </p>
       </div>
 
@@ -41,17 +45,17 @@
         <div class="contact-info">
           <div class="contact-item">
             <span class="contact-icon">📧</span>
-            <span class="contact-text">support@ahut.edu.cn</span>
+            <span class="contact-text">1523610551@qq.com</span>
           </div>
-          <div class="contact-item">
-            <span class="contact-icon">📱</span>
-            <span class="contact-text">微信公众号：安徽工业大学</span>
-          </div>
+<!--          <div class="contact-item">-->
+<!--            <span class="contact-icon">📱</span>-->
+<!--            <span class="contact-text">微信公众号：安徽工业大学</span>-->
+<!--          </div>-->
         </div>
       </div>
 
       <div class="about-footer">
-        <p>© 2024 安徽工业大学 版权所有</p>
+        <p>© 2026 Domye 版权所有</p>
       </div>
     </div>
   </div>

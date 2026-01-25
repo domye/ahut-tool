@@ -64,7 +64,7 @@
       </div>
     </nav>
     <div class="footer" v-if="!isMobile">
-      <p>© 2024 安徽工业大学</p>
+      <p>© 2026 Domye</p>
     </div>
   </div>
 </template>
