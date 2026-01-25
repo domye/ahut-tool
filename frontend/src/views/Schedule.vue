@@ -77,7 +77,7 @@
               <div class="course-name">{{ course.name }}</div>
               <div class="course-info">{{ course.teacher }}</div>
               <div class="course-info">{{ course.classroom }}</div>
-              <div class="course-info">周次: {{ course.weekNumbers }}</div>
+<!--              <div class="course-info">周次: {{ course.weekNumbers }}</div>-->
             </div>
           </div>
         </template>
@@ -183,7 +183,9 @@ function handlePrevWeek() {
 
 // 处理下一周
 function handleNextWeek() {
-  scheduleStore.setCurrentWeek(scheduleStore.currentWeek + 1)
+  if (scheduleStore.currentWeek < 20) {
+    scheduleStore.setCurrentWeek(scheduleStore.currentWeek + 1)
+  }
 }
 
 // 为每门课程生成马卡龙色系颜色
@@ -280,7 +282,7 @@ onMounted(() => {
   background-color: #e0e5ec;
   border-radius: 10px;
   padding: 8px 12px;
-  margin-bottom: 12px;
+  margin-bottom: 20px;
 
   box-shadow: 3px 3px 6px 0 rgba(163,177,198, 0.4), -3px -3px 6px 0 rgba(255,255,255, 0.8);
 }
@@ -493,8 +495,8 @@ onMounted(() => {
 
 .schedule-grid {
   display: grid;
-  grid-template-columns: 80px repeat(5, 1fr);
-  grid-auto-rows: minmax(120px, auto);
+  grid-template-columns: 50px repeat(5, 1fr);
+  grid-auto-rows: minmax(60px, auto);
   gap: 8px;
 }
 
@@ -598,14 +600,14 @@ onMounted(() => {
 /* 响应式设计 */
 @media (max-width: 1024px) {
   .schedule-grid {
-    grid-template-columns: 60px repeat(5, 1fr);
-    grid-auto-rows: minmax(100px, auto);
+    grid-template-columns:40px repeat(5, 1fr);
+    grid-auto-rows: minmax(60px, auto);
     gap: 6px;
   }
 
   .schedule-cell {
     padding: 8px;
-    min-height: 100px;
+    min-height: 70px;
   }
 
   .course-name {
@@ -650,7 +652,7 @@ onMounted(() => {
 
   .schedule-grid {
     grid-template-columns: 40px repeat(5, 1fr);
-    grid-auto-rows: minmax(80px, auto);
+    grid-auto-rows: minmax(60px, auto);
     gap: 4px;
   }
 
