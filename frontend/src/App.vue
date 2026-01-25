@@ -2,6 +2,7 @@
 import { onMounted, onUnmounted } from 'vue'
 import { useUserStore } from './store/user'
 import { useElectricityStore } from './store/electricity'
+import { message } from 'ant-design-vue'
 
 const userStore = useUserStore()
 const electricityStore = useElectricityStore()
@@ -16,6 +17,14 @@ const performLogin = async () => {
     await userStore.login()
     await electricityStore.login()
   } catch (error) {
+    // 根据错误信息显示不同的提示
+    if (userStore.message === '请先配置教务系统') {
+      message.warning('请先配置教务系统')
+    } else if (electricityStore.message === '请先配置缴费系统') {
+      message.warning('请先配置缴费系统')
+    } else if (userStore.message === '登录失败' || electricityStore.message === '登录失败') {
+      message.error('登录失败')
+    }
     console.error('登录失败:', error)
   }
 }

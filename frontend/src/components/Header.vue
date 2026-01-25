@@ -5,8 +5,8 @@ import { useUserStore } from '../store/user'
 const router = useRouter()
 const userStore = useUserStore()
 
-function handleLogout() {
-  userStore.login()
+function handleConfig() {
+  router.push('/main/config')
 }
 </script>
 
@@ -15,9 +15,9 @@ function handleLogout() {
     <div class="user-info">
       <span>欢迎使用</span>
     </div>
-    <button class="logout-btn" @click="handleLogout">
-      <span class="logout-icon">🚪</span>
-      <span class="logout-text">重新登录</span>
+    <button class="logout-btn" @click="handleConfig">
+      <span class="logout-icon">⚙️</span>
+      <span class="logout-text">配置</span>
     </button>
   </div>
 </template>

@@ -38,3 +38,7 @@ func (s *Service) LoadPayLoginConfig() models.PayCredentials {
 	}
 	return config
 }
+
+func (s *Service) ExistPayLoginConfig() bool {
+	return utils.FileExists("PayCredentials.json")
+}

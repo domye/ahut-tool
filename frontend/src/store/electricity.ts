@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import { PayLogin, GetIMS, LoadDormSetting, SettingDorm } from '../../wailsjs/go/backend/App'
+import { PayLogin, GetIMS, LoadDormSetting, SettingDorm, LoadPayLogin, ExistPayLoginConfig } from '../../wailsjs/go/backend/App'
 import { models } from '../../wailsjs/go/models'
 
 export const useElectricityStore = defineStore('electricity', () => {
@@ -20,6 +20,9 @@ export const useElectricityStore = defineStore('electricity', () => {
 
   // 宿舍配置
   const dormConfig = ref<models.DormConfig | null>(null)
+
+  // 缴费系统配置
+  const payCredentials = ref<models.PayCredentials | null>(null)
 
   // 加载宿舍配置
   function loadDormConfig(): Promise<void> {
@@ -67,27 +70,63 @@ export const useElectricityStore = defineStore('electricity', () => {
     })
   }
 
+  // 加载缴费系统配置
+  function loadPayConfig(): Promise<void> {
+    return new Promise((resolve, reject) => {
+      LoadPayLogin()
+        .then((config: models.PayCredentials) => {
+          payCredentials.value = config
+          resolve()
+        })
+        .catch((error: any) => {
+          console.error('加载缴费系统配置失败:', error)
+          reject(error)
+        })
+    })
+  }
+
   function login(): Promise<void> {
     return new Promise((resolve, reject) => {
+      // 先检查配置是否存在
+      ExistPayLoginConfig()
+        .then((exists: boolean) => {
+          if (!exists) {
+            message.value = '请先配置缴费系统'
+            reject(new Error('请先配置缴费系统'))
+            return
+          }
 
-      message.value = '登录中...'
-      loading.value = true
-      PayLogin()
+          // 加载配置
+          return loadPayConfig()
+        })
+        .then(() => {
+          message.value = '登录中...'
+          loading.value = true
+          // 使用配置进行登录
+          if (payCredentials.value) {
+            return PayLogin(payCredentials.value)
+          } else {
+            message.value = '未找到配置，请先配置缴费系统'
+            loading.value = false
+            return Promise.reject(new Error('未找到配置，请先配置缴费系统'))
+          }
+        })
         .then((result: number) => {
           if (result == 200) {
             message.value = '登录成功'
+            isLoggedIn.value = true
             resolve()
           } else {
-            message.value = '登录失败，请检查学号和密码'
-            reject(new Error('登录失败，请检查学号和密码'))
+            message.value = '登录失败'
+            reject(new Error('登录失败'))
           }
         })
         .catch((error: any) => {
-          message.value = '登录失败: ' + error
-          reject(error)
-        })
-        .finally(() => {
+          if (message.value !== '请先配置缴费系统' && message.value !== '未找到配置，请先配置缴费系统') {
+            message.value = '登录失败'
+          }
           loading.value = false
+          reject(error)
         })
     })
   }
@@ -175,8 +214,10 @@ export const useElectricityStore = defineStore('electricity', () => {
     Room_No,
     etype,
     dormConfig,
+    payCredentials,
     loadDormConfig,
     saveDormConfig,
+    loadPayConfig,
     login,
     fetchElectricity: fetchAllElectricity,
     fetchAirConditioning,

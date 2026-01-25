@@ -50,6 +50,11 @@ const routes: Array<RouteRecordRaw> = [
         path: 'coming-soon',
         name: 'ComingSoon',
         component: () => import('../views/ComingSoon.vue')
+      },
+      {
+        path: 'config',
+        name: 'Config',
+        component: () => import('../views/Config.vue')
       }
     ]
   }

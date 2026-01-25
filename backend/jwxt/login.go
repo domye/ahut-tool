@@ -39,3 +39,7 @@ func (s *Service) LoadJwxtLoginConfig() models.JwxtCredentials {
 	}
 	return config
 }
+
+func (s *Service) ExistJwxtLoginConfig() bool {
+	return utils.FileExists("JwxtCredentials.json")
+}

@@ -48,3 +48,11 @@ func (a *App) SettingPayLogin(user, password string) {
 	}
 	PayInstance.SavePayLoginConfig(userInfo)
 }
+
+func (a *App) ExistJwxtLoginConfig() bool {
+	return JwxtInstance.ExistJwxtLoginConfig()
+}
+
+func (a *App) ExistPayLoginConfig() bool {
+	return PayInstance.ExistPayLoginConfig()
+}
