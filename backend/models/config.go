@@ -20,7 +20,8 @@ type SchedulesConfig struct {
 
 // DormConfig 宿舍配置
 type DormConfig struct {
-	Campus     string `json:"campus"`
-	BuildingId string `json:"buildingId"`
-	RoomId     string `json:"roomId"`
+	Campus       string `json:"campus"`
+	BuildingId   string `json:"buildingId"`
+	BuildingName string `json:"buildingName"`
+	RoomId       string `json:"roomId"`
 }

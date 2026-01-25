@@ -2,6 +2,7 @@ package pay
 
 import (
 	"ahut-tool/backend/models"
+	"ahut-tool/backend/utils"
 	"encoding/json"
 )
 
@@ -28,4 +29,22 @@ func (s *Service) GetIMS(formData map[string]string) (*models.IMSResponse, error
 	}
 	print(response.Data.UsedAmp)
 	return &response, nil
+}
+
+// SaveDormConfig 保存宿舍配置数据
+func (s *Service) SaveDormConfig(data models.DormConfig) {
+	err := utils.SaveJSON(data, "DormConfig.json")
+	if err != nil {
+		return
+	}
+}
+
+// LoadDormConfig 加载宿舍配置数据
+func (s *Service) LoadDormConfig() models.DormConfig {
+	var dorm models.DormConfig
+	err := utils.LoadJSON("DormConfig.json", &dorm)
+	if err != nil {
+		return models.DormConfig{}
+	}
+	return dorm
 }

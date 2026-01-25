@@ -46,10 +46,6 @@ func (s *Service) LoadSchedulesConfig() models.SchedulesConfig {
 	return classes
 }
 
-func (s *Service) SchedulesConfigExists() bool {
-	return utils.FileExists("classesConfig.json")
-}
-
 // SaveClassSchedule 保存课程表数据
 func (s *Service) SaveClassSchedule(xnxq string, classes []models.Class) error {
 	// 构造文件名
