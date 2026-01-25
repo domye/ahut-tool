@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import { GetClassSchedule } from '../../wailsjs/go/backend/App'
+import { GetClassSchedule, LoadSchedulesSetting } from '../../wailsjs/go/backend/App'
 import { models } from '../../wailsjs/go/models'
 
 export const useScheduleStore = defineStore('schedule', () => {
@@ -9,27 +9,63 @@ export const useScheduleStore = defineStore('schedule', () => {
   const error = ref('')
 
   // 当前选中的学期
-  const currentSemester = ref('2025-2026-1')
+  const currentSemester = ref('')
 
   // 当前选中的周数，默认为第1周
   const currentWeek = ref(1)
+
+  // 学期开始日期
+  const startDate = ref('')
+
+  // 加载配置
+  function loadScheduleSettings(): Promise<void> {
+    return new Promise((resolve, reject) => {
+      LoadSchedulesSetting()
+        .then((config: models.SchedulesConfig) => {
+          currentSemester.value = config.defaultSchedule
+          startDate.value = config.startDate
+          resolve()
+        })
+        .catch((err: any) => {
+          error.value = '加载配置失败: ' + err
+          reject(err)
+        })
+    })
+  }
 
   function fetchSchedule(): Promise<void> {
     return new Promise((resolve, reject) => {
       loading.value = true
       error.value = ''
-      GetClassSchedule(currentSemester.value)
-        .then((response: models.ClassScheduleResponse) => {
-          classes.value = response.classes
-          resolve()
+      
+      // 先加载配置
+      loadScheduleSettings()
+        .then(() => {
+          // 如果没有配置学期，则不获取课程表
+          if (!currentSemester.value) {
+            error.value = '请先配置学期信息'
+            loading.value = false
+            return
+          }
+          
+          // 获取课程表
+          GetClassSchedule(currentSemester.value)
+            .then((response: models.ClassScheduleResponse) => {
+              classes.value = response.classes
+              resolve()
+            })
+            .catch((err: any) => {
+              error.value = '获取课程表失败: ' + err
+              reject(err)
+            })
+            .finally(() => {
+              console.log(classes.value)
+              loading.value = false
+            })
         })
-        .catch((err: any) => {
-          error.value = '获取课程表失败: ' + err
-          reject(err)
-        })
-        .finally(() => {
-          console.log(classes.value)
+        .catch((err) => {
           loading.value = false
+          reject(err)
         })
     })
   }
@@ -64,7 +100,9 @@ export const useScheduleStore = defineStore('schedule', () => {
     error,
     currentSemester,
     currentWeek,
+    startDate,
     setCurrentWeek,
-    fetchSchedule
+    fetchSchedule,
+    loadScheduleSettings
   }
 })

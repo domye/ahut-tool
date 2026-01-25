@@ -69,7 +69,7 @@ onUnmounted(() => {
 
 .content {
   flex: 1;
-  padding: 24px;
+  padding:5px;
   background-color: #e0e5ec;
   overflow-y: auto;
   overflow-x: hidden;

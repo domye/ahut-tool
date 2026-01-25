@@ -3,49 +3,35 @@
     <!-- 查询条件 -->
     <div class="filter-section">
       <a-form layout="inline" class="filter-form">
-        <a-form-item label="学期">
-          <a-select
-            v-model:value="scheduleStore.currentSemester"
-            @change="handleSemesterChange"
-            placeholder="请选择学期"
-            style="width: 200px"
-            allow-clear
-            :options="semesterOptions"
-            popup-class-name="neumorphic-select-dropdown"
-          />
-        </a-form-item>
-        <a-form-item label="当前周次">
-          <a-space>
-            <a-button @click="handlePrevWeek" class="neumorphic-button">
+        <a-form-item>
+          <a-space :size="isMobile ? 8 : 12">
+            <a-button @click="handlePrevWeek" class="neumorphic-button" :size="isMobile ? 'small' : 'middle'">
               <template #icon>
                 <LeftOutlined />
               </template>
-              上一周
+              {{ isMobile ? '' : '上一周' }}
             </a-button>
-            <a-tag class="week-tag">第 {{ scheduleStore.currentWeek }} 周</a-tag>
-            <a-button @click="handleNextWeek" class="neumorphic-button">
-              下一周
+            <a-tag class="week-tag" :class="{ 'week-tag-mobile': isMobile }">第 {{ scheduleStore.currentWeek }} 周</a-tag>
+            <a-button @click="handleNextWeek" class="neumorphic-button" :size="isMobile ? 'small' : 'middle'">
+              {{ isMobile ? '' : '下一周' }}
               <template #icon>
                 <RightOutlined />
               </template>
             </a-button>
-          </a-space>
-        </a-form-item>
-        <a-form-item>
-          <a-space :size="20">
             <a-button
-              type="primary"
-              @click="handleRefresh"
-              :loading="scheduleStore.loading"
-              class="neumorphic-button query-button"
+                type="primary"
+                @click="openConfigModal"
+                class="neumorphic-button config-button"
+                :size="isMobile ? 'small' : 'middle'"
             >
               <template #icon>
-                <ReloadOutlined />
+                <SettingOutlined />
               </template>
-              刷新
+              {{ isMobile ? '' : '导入配置' }}
             </a-button>
           </a-space>
         </a-form-item>
+
       </a-form>
       <a-alert
         v-if="scheduleStore.error"
@@ -57,6 +43,9 @@
         style="margin-top: 16px"
       />
     </div>
+    
+    <!-- 配置弹窗 -->
+    <ScheduleConfig v-model:open="configModalOpen" @success="handleConfigSuccess" />
 
 
 
@@ -97,18 +86,33 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, onUnmounted } from 'vue'
 import { useScheduleStore } from '../store/schedule'
-import { LeftOutlined, RightOutlined, ReloadOutlined } from '@ant-design/icons-vue'
-import { generateSemesterOptions } from '../utils/semester'
+import { LeftOutlined, RightOutlined, SettingOutlined } from '@ant-design/icons-vue'
+import ScheduleConfig from '../components/ScheduleConfig.vue'
 
 const scheduleStore = useScheduleStore()
+
+// 响应式检测移动端
+const isMobile = ref(false)
+const checkMobile = () => {
+  isMobile.value = window.innerWidth < 768
+}
+
+onMounted(() => {
+  checkMobile()
+  window.addEventListener('resize', checkMobile)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('resize', checkMobile)
+})
 
 const weekDays = ['周一', '周二', '周三', '周四', '周五']
 const periods = ['1-2', '3-4', '5-6', '7-8', '9-10-11']
 
-// 学期选项 - 使用工具类生成前后各2年的学期选项
-const semesterOptions = computed(() => generateSemesterOptions(2))
+// 配置弹窗状态
+const configModalOpen = ref(false)
 
 // 处理上一周
 function handlePrevWeek() {
@@ -184,13 +188,14 @@ function getCourse(day: number, period: string) {
   })
 }
 
-// 处理学期变化
-function handleSemesterChange() {
-  scheduleStore.fetchSchedule()
+// 打开配置弹窗
+function openConfigModal() {
+  configModalOpen.value = true
 }
 
-// 处理刷新
-function handleRefresh() {
+// 配置成功后的处理
+function handleConfigSuccess() {
+  // 重新加载课程表
   scheduleStore.fetchSchedule()
 }
 
@@ -209,21 +214,37 @@ onMounted(() => {
 
 .filter-section {
   background-color: #e0e5ec;
-  border-radius: 16px;
-  padding: 20px;
-  margin-bottom: 24px;
-  box-shadow: 6px 6px 10px 0 rgba(163,177,198, 0.7), -6px -6px 10px 0 rgba(255,255,255, 0.8);
+  border-radius: 10px;
+  padding: 8px 12px;
+  margin-bottom: 12px;
+
+  box-shadow: 3px 3px 6px 0 rgba(163,177,198, 0.4), -3px -3px 6px 0 rgba(255,255,255, 0.8);
 }
 
 .filter-form {
   display: flex;
   flex-wrap: wrap;
-  gap: 16px;
+  gap: 6px;
   align-items: center;
 }
 
 :deep(.filter-form .ant-form-item) {
   margin-bottom: 0;
+}
+
+/* 移动端适配 */
+@media (max-width: 768px) {
+  .filter-section {
+    padding: 6px 10px;
+    margin-bottom: 10px;
+    height: 45px;
+    border-radius: 8px;
+  }
+
+  .filter-form {
+    justify-content: center;
+    gap: 4px;
+  }
 }
 
 :deep(.filter-form .ant-form-item-label > label) {
@@ -301,13 +322,31 @@ onMounted(() => {
 }
 
 .week-tag {
-  padding: 8px 16px;
-  font-size: 1rem;
+  padding: 6px 12px;
+  font-size: 0.9rem;
   font-weight: 500;
-  border-radius: 12px;
+  border-radius: 8px;
   background-color: #e0e5ec !important;
   color: #4a5568 !important;
-  box-shadow: 4px 4px 8px 0 rgba(163,177,198, 0.3), -4px -4px 8px 0 rgba(255,255,255, 0.8) !important;
+  box-shadow: 3px 3px 6px 0 rgba(163,177,198, 0.3), -3px -3px 6px 0 rgba(255,255,255, 0.8) !important;
+}
+
+.week-tag-mobile {
+  padding: 4px 8px;
+  font-size: 0.8rem;
+}
+
+/* 移动端按钮样式 */
+@media (max-width: 768px) {
+  :deep(.neumorphic-button.ant-btn-sm) {
+    height: 28px !important;
+    padding: 0 10px !important;
+    font-size: 0.85rem;
+  }
+
+  :deep(.neumorphic-button .anticon) {
+    font-size: 14px;
+  }
 }
 
 /* 下拉菜单新拟态风格 - 全局样式 */
@@ -350,12 +389,12 @@ onMounted(() => {
 .neumorphic-button {
   background-color: #e0e5ec !important;
   border: none !important;
-  border-radius: 8px !important;
+  border-radius: 6px !important;
   color: #4a5568 !important;
   font-weight: 500;
-  height: 40px !important;
-  padding: 0 24px !important;
-  box-shadow: 4px 4px 8px 0 rgba(163,177,198, 0.3), -4px -4px 8px 0 rgba(255,255,255, 0.8) !important;
+  height: 32px !important;
+  padding: 0 16px !important;
+  box-shadow: 3px 3px 6px 0 rgba(163,177,198, 0.3), -3px -3px 6px 0 rgba(255,255,255, 0.8) !important;
   transition: all 0.3s ease !important;
   display: inline-flex !important;
   align-items: center !important;
@@ -363,8 +402,8 @@ onMounted(() => {
 }
 
 .neumorphic-button:hover {
-  box-shadow: 6px 6px 12px 0 rgba(163,177,198, 0.4), -6px -6px 12px 0 rgba(255,255,255, 0.9) !important;
-  transform: translateY(-2px);
+  box-shadow: 4px 4px 8px 0 rgba(163,177,198, 0.4), -4px -4px 8px 0 rgba(255,255,255, 0.9) !important;
+  transform: translateY(-1px);
 }
 
 .neumorphic-button:active {
@@ -373,11 +412,11 @@ onMounted(() => {
 }
 
 /* 查询按钮特殊样式 */
-.query-button {
+.config-button {
   color: #409eff !important;
 }
 
-.query-button:hover {
+.config-button:hover {
   color: #66b1ff !important;
 }
 
