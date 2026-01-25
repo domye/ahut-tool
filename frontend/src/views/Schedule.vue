@@ -53,8 +53,9 @@
       <div class="schedule-grid">
         <!-- 表头 -->
         <div class="schedule-cell header-cell"></div>
-        <div v-for="day in weekDays" :key="day" class="schedule-cell header-cell">
-          {{ day }}
+        <div v-for="(day, index) in weekDays" :key="day" class="schedule-cell header-cell">
+          <div class="header-day">{{ day }}</div>
+          <div class="header-date">{{ formatDate(currentWeekDates[index]) }}</div>
         </div>
 
         <!-- 课程表内容 -->
@@ -113,6 +114,65 @@ const periods = ['1-2', '3-4', '5-6', '7-8', '9-10-11']
 
 // 配置弹窗状态
 const configModalOpen = ref(false)
+
+// 计算当前周次
+function calculateCurrentWeek() {
+  if (!scheduleStore.startDate) return 1
+
+  const start = new Date(scheduleStore.startDate)
+  const now = new Date()
+
+  // 重置时间为0点，只比较日期
+  start.setHours(0, 0, 0, 0)
+  now.setHours(0, 0, 0, 0)
+
+  // 如果当前日期在学期开始前，返回第1周
+  if (now < start) return 1
+
+  // 计算相差的天数
+  const diffTime = now.getTime() - start.getTime()
+  const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24))
+
+  // 计算周次，最多20周
+  const week = Math.floor(diffDays / 7) + 1
+  return Math.min(week, 20)
+}
+
+// 获取当前周的日期范围
+function getWeekDates(week: number) {
+  if (!scheduleStore.startDate) return []
+
+  const start = new Date(scheduleStore.startDate)
+  // 计算当前周的起始日期（周一）
+  const weekStart = new Date(start)
+  weekStart.setDate(start.getDate() + (week - 1) * 7)
+
+  // 调整到周一
+  const dayOfWeek = weekStart.getDay()
+  const diff = dayOfWeek === 0 ? 6 : dayOfWeek - 1
+  weekStart.setDate(weekStart.getDate() - diff)
+
+  // 生成周一到周五的日期
+  const dates = []
+  for (let i = 0; i < 5; i++) {
+    const date = new Date(weekStart)
+    date.setDate(weekStart.getDate() + i)
+    dates.push(date)
+  }
+
+  return dates
+}
+
+// 格式化日期为"3.12"格式
+function formatDate(date: Date | undefined): string {
+  if (!date) return ''
+  return `${date.getMonth() + 1}.${date.getDate()}`
+}
+
+// 当前周的日期
+const currentWeekDates = computed(() => {
+  return getWeekDates(scheduleStore.currentWeek)
+})
 
 // 处理上一周
 function handlePrevWeek() {
@@ -201,7 +261,11 @@ function handleConfigSuccess() {
 
 // 组件挂载时加载课程表
 onMounted(() => {
-  scheduleStore.fetchSchedule()
+  scheduleStore.fetchSchedule().then(() => {
+    // 加载完课程表后，计算当前周次
+    const week = calculateCurrentWeek()
+    scheduleStore.setCurrentWeek(week)
+  })
 })
 </script>
 
@@ -450,6 +514,17 @@ onMounted(() => {
   color: #4a5568;
   min-height: auto;
   padding: 16px;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.header-day {
+  font-size: 1rem;
+}
+
+.header-date {
+  font-size: 0.85rem;
+  color: #718096;
 }
 
 .period-cell {
