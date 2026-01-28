@@ -1,3 +1,6 @@
+<!-- frontend/src/views/Config.vue -->
+// 系统配置页面，用于配置教务系统和缴费系统的登录信息
+
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
@@ -11,26 +14,22 @@ const router = useRouter()
 const userStore = useUserStore()
 const electricityStore = useElectricityStore()
 
-// 教务系统配置
 const jwxtUser = ref('')
 const jwxtPassword = ref('')
-
-// 缴费系统配置
 const payUser = ref('')
 const payPassword = ref('')
 
-// 加载保存的配置
 onMounted(() => {
-  loadConfigs()
+  handleLoadConfigs()
 })
 
-function loadConfigs() {
+function handleLoadConfigs() {
   LoadJwxtLogin()
     .then((config: models.JwxtCredentials) => {
       jwxtUser.value = config.user
       jwxtPassword.value = config.password
     })
-    .catch((error: any) => {
+    .catch((error: unknown) => {
       console.error('加载教务系统配置失败:', error)
     })
 
@@ -39,32 +38,34 @@ function loadConfigs() {
       payUser.value = config.user
       payPassword.value = config.password
     })
-    .catch((error: any) => {
+    .catch((error: unknown) => {
       console.error('加载缴费系统配置失败:', error)
     })
 }
 
-function saveJwxtConfig() {
+function handleSaveJwxtConfig() {
   SettingJwxtLogin(jwxtUser.value, jwxtPassword.value)
     .then(() => {
       message.success('教务系统配置保存成功')
     })
-    .catch((error: any) => {
-      message.error('保存教务系统配置失败: ' + error)
+    .catch((error: unknown) => {
+      const errorMessage = error instanceof Error ? error.message : String(error)
+      message.error('保存教务系统配置失败: ' + errorMessage)
     })
 }
 
-function savePayConfig() {
+function handleSavePayConfig() {
   SettingPayLogin(payUser.value, payPassword.value)
     .then(() => {
       message.success('缴费系统配置保存成功')
     })
-    .catch((error: any) => {
-      message.error('保存缴费系统配置失败: ' + error)
+    .catch((error: unknown) => {
+      const errorMessage = error instanceof Error ? error.message : String(error)
+      message.error('保存缴费系统配置失败: ' + errorMessage)
     })
 }
 
-function goBack() {
+function handleGoBack() {
   router.back()
 }
 </script>
@@ -72,7 +73,7 @@ function goBack() {
 <template>
   <div class="config-container">
     <div class="config-header">
-      <button class="back-btn" @click="goBack">← 返回</button>
+      <button class="back-btn" @click="handleGoBack">← 返回</button>
       <h2>系统配置</h2>
     </div>
 
@@ -87,6 +88,7 @@ function goBack() {
             type="text"
             placeholder="请输入学号"
             class="neumorphic-input"
+            aria-label="学号输入框"
           />
         </div>
         <div class="form-group">
@@ -97,9 +99,10 @@ function goBack() {
             type="password"
             placeholder="请输入密码"
             class="neumorphic-input"
+            aria-label="密码输入框"
           />
         </div>
-        <button class="save-btn" @click="saveJwxtConfig">保存配置</button>
+        <button class="save-btn" @click="handleSaveJwxtConfig">保存配置</button>
       </div>
 
       <div class="config-card">
@@ -112,6 +115,7 @@ function goBack() {
             type="text"
             placeholder="请输入学号"
             class="neumorphic-input"
+            aria-label="缴费系统学号输入框"
           />
         </div>
         <div class="form-group">
@@ -122,9 +126,10 @@ function goBack() {
             type="password"
             placeholder="请输入密码"
             class="neumorphic-input"
+            aria-label="缴费系统密码输入框"
           />
         </div>
-        <button class="save-btn" @click="savePayConfig">保存配置</button>
+        <button class="save-btn" @click="handleSavePayConfig">保存配置</button>
       </div>
     </div>
   </div>

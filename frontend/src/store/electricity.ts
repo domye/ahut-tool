@@ -1,7 +1,14 @@
+// frontend/src/store/electricity.ts
+// 电费查询状态管理 Store
+
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { PayLogin, GetIMS, LoadDormSetting, SettingDorm, LoadPayLogin, ExistPayLoginConfig } from '../../wailsjs/go/backend/App'
 import { models } from '../../wailsjs/go/models'
+
+interface IMSResponse {
+  Data: models.IMSData
+}
 
 export const useElectricityStore = defineStore('electricity', () => {
   const electricity = ref<models.IMSData>({} as models.IMSData)
@@ -11,83 +18,74 @@ export const useElectricityStore = defineStore('electricity', () => {
   const isLoggedIn = ref(false)
   const message = ref('')
 
-  // 查询参数
-  const xiaoqu = ref('NewS')  // 校区
-  const ld_Name = ref('')     // 楼栋名称
-  const ld_Id = ref('')       // 楼栋ID
-  const Room_No = ref('')     // 房间号
-  const etype = ref('K')      // 类型
+  const xiaoqu = ref('NewS')
+  const ld_Name = ref('')
+  const ld_Id = ref('')
+  const Room_No = ref('')
+  const etype = ref('K')
 
-  // 宿舍配置
   const dormConfig = ref<models.DormConfig | null>(null)
-
-  // 缴费系统配置
   const payCredentials = ref<models.PayCredentials | null>(null)
 
-  // 加载宿舍配置
-  function loadDormConfig(): Promise<void> {
+  const handleLoadDormConfig = (): Promise<void> => {
     return new Promise((resolve, reject) => {
       LoadDormSetting()
         .then((config: models.DormConfig) => {
           dormConfig.value = config
-          // 应用配置到查询参数
           xiaoqu.value = config.campus
           ld_Name.value = config.buildingName
           ld_Id.value = config.buildingId
           Room_No.value = config.roomId
           resolve()
         })
-        .catch((err: any) => {
-          error.value = '加载配置失败: ' + err
+        .catch((err: unknown) => {
+          const errorMessage = err instanceof Error ? err.message : String(err)
+          error.value = '加载配置失败: ' + errorMessage
           reject(err)
         })
     })
   }
 
-  // 保存宿舍配置
-  function saveDormConfig(campus: string, buildingId: string, buildingName: string, roomId: string): Promise<void> {
+  const handleSaveDormConfig = (
+    campus: string,
+    buildingId: string,
+    buildingName: string,
+    roomId: string
+  ): Promise<void> => {
     return new Promise((resolve, reject) => {
       SettingDorm(campus, buildingId, buildingName, roomId)
         .then(() => {
-          // 更新本地配置
-          dormConfig.value = {
-            campus,
-            buildingId,
-            buildingName,
-            roomId
-          }
-          // 应用配置到查询参数
+          dormConfig.value = { campus, buildingId, buildingName, roomId }
           xiaoqu.value = campus
           ld_Name.value = buildingName
           ld_Id.value = buildingId
           Room_No.value = roomId
           resolve()
         })
-        .catch((err: any) => {
-          error.value = '保存配置失败: ' + err
+        .catch((err: unknown) => {
+          const errorMessage = err instanceof Error ? err.message : String(err)
+          error.value = '保存配置失败: ' + errorMessage
           reject(err)
         })
     })
   }
 
-  // 加载缴费系统配置
-  function loadPayConfig(): Promise<void> {
+  const handleLoadPayConfig = (): Promise<void> => {
     return new Promise((resolve, reject) => {
       LoadPayLogin()
         .then((config: models.PayCredentials) => {
           payCredentials.value = config
           resolve()
         })
-        .catch((error: any) => {
+        .catch((error: unknown) => {
           console.error('加载缴费系统配置失败:', error)
           reject(error)
         })
     })
   }
 
-  function login(): Promise<void> {
+  const handleLogin = (): Promise<void> => {
     return new Promise((resolve, reject) => {
-      // 先检查配置是否存在
       ExistPayLoginConfig()
         .then((exists: boolean) => {
           if (!exists) {
@@ -96,13 +94,11 @@ export const useElectricityStore = defineStore('electricity', () => {
             return
           }
 
-          // 加载配置
-          return loadPayConfig()
+          return handleLoadPayConfig()
         })
         .then(() => {
           message.value = '登录中...'
           loading.value = true
-          // 使用配置进行登录
           if (payCredentials.value) {
             return PayLogin(payCredentials.value)
           } else {
@@ -112,7 +108,7 @@ export const useElectricityStore = defineStore('electricity', () => {
           }
         })
         .then((result: number) => {
-          if (result == 200) {
+          if (result === 200) {
             message.value = '登录成功'
             isLoggedIn.value = true
             resolve()
@@ -121,7 +117,7 @@ export const useElectricityStore = defineStore('electricity', () => {
             reject(new Error('登录失败'))
           }
         })
-        .catch((error: any) => {
+        .catch((error: unknown) => {
           if (message.value !== '请先配置缴费系统' && message.value !== '未找到配置，请先配置缴费系统') {
             message.value = '登录失败'
           }
@@ -131,18 +127,18 @@ export const useElectricityStore = defineStore('electricity', () => {
     })
   }
 
-  // 查询空调电费
-  function fetchAirConditioning(): Promise<void> {
+  const handleFetchAirConditioning = (): Promise<void> => {
     return new Promise((resolve, reject) => {
       loading.value = true
       error.value = ''
       GetIMS(xiaoqu.value, ld_Name.value, ld_Id.value, Room_No.value, 'K')
-        .then((response: any) => {
+        .then((response: IMSResponse) => {
           airConditioning.value = response.Data
           resolve()
         })
-        .catch((err: any) => {
-          error.value = '获取空调电费信息失败: ' + err
+        .catch((err: unknown) => {
+          const errorMessage = err instanceof Error ? err.message : String(err)
+          error.value = '获取空调电费信息失败: ' + errorMessage
           reject(err)
         })
         .finally(() => {
@@ -151,18 +147,18 @@ export const useElectricityStore = defineStore('electricity', () => {
     })
   }
 
-  // 查询房间电费
-  function fetchRoomElectricity(): Promise<void> {
+  const handleFetchRoomElectricity = (): Promise<void> => {
     return new Promise((resolve, reject) => {
       loading.value = true
       error.value = ''
       GetIMS(xiaoqu.value, ld_Name.value, ld_Id.value, Room_No.value, 'L')
-        .then((response: any) => {
+        .then((response: IMSResponse) => {
           electricity.value = response.Data
           resolve()
         })
-        .catch((err: any) => {
-          error.value = '获取房间电费信息失败: ' + err
+        .catch((err: unknown) => {
+          const errorMessage = err instanceof Error ? err.message : String(err)
+          error.value = '获取房间电费信息失败: ' + errorMessage
           reject(err)
         })
         .finally(() => {
@@ -171,8 +167,7 @@ export const useElectricityStore = defineStore('electricity', () => {
     })
   }
 
-  // 同时查询空调和房间电费
-  function fetchAllElectricity(): Promise<void> {
+  const handleFetchAllElectricity = (): Promise<void> => {
     return new Promise((resolve, reject) => {
       loading.value = true
       error.value = ''
@@ -181,13 +176,14 @@ export const useElectricityStore = defineStore('electricity', () => {
         GetIMS(xiaoqu.value, ld_Name.value, ld_Id.value, Room_No.value, 'K'),
         GetIMS(xiaoqu.value, ld_Name.value, ld_Id.value, Room_No.value, 'L')
       ])
-        .then(([acResponse, roomResponse]: any[]) => {
+        .then(([acResponse, roomResponse]: IMSResponse[]) => {
           airConditioning.value = acResponse.Data
           electricity.value = roomResponse.Data
           resolve()
         })
-        .catch((err: any) => {
-          error.value = '获取电费信息失败: ' + err
+        .catch((err: unknown) => {
+          const errorMessage = err instanceof Error ? err.message : String(err)
+          error.value = '获取电费信息失败: ' + errorMessage
           reject(err)
         })
         .finally(() => {
@@ -196,7 +192,7 @@ export const useElectricityStore = defineStore('electricity', () => {
     })
   }
 
-  function logout() {
+  const handleLogout = (): void => {
     isLoggedIn.value = false
     localStorage.removeItem('electricityLoggedIn')
   }
@@ -215,13 +211,13 @@ export const useElectricityStore = defineStore('electricity', () => {
     etype,
     dormConfig,
     payCredentials,
-    loadDormConfig,
-    saveDormConfig,
-    loadPayConfig,
-    login,
-    fetchElectricity: fetchAllElectricity,
-    fetchAirConditioning,
-    fetchRoomElectricity,
-    logout
+    loadDormConfig: handleLoadDormConfig,
+    saveDormConfig: handleSaveDormConfig,
+    loadPayConfig: handleLoadPayConfig,
+    login: handleLogin,
+    fetchElectricity: handleFetchAllElectricity,
+    fetchAirConditioning: handleFetchAirConditioning,
+    fetchRoomElectricity: handleFetchRoomElectricity,
+    logout: handleLogout
   }
 })

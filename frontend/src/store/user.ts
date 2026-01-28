@@ -1,7 +1,15 @@
+// frontend/src/store/user.ts
+// 教务系统用户状态管理 Store
+
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { JwxtLogin, LoadJwxtLogin, ExistJwxtLoginConfig } from '../../wailsjs/go/backend/App'
 import { models } from '../../wailsjs/go/models'
+
+interface LoginResponse {
+  status: number
+  error?: string
+}
 
 export const useUserStore = defineStore('user', () => {
   const isLoggedIn = ref(false)
@@ -9,8 +17,7 @@ export const useUserStore = defineStore('user', () => {
   const message = ref('')
   const jwxtCredentials = ref<models.JwxtCredentials | null>(null)
 
-  // 加载教务系统配置
-  function loadJwxtConfig(): Promise<void> {
+  const handleLoadJwxtConfig = (): Promise<void> => {
     return new Promise((resolve, reject) => {
       LoadJwxtLogin()
         .then((config: models.JwxtCredentials) => {
@@ -18,16 +25,15 @@ export const useUserStore = defineStore('user', () => {
           userId.value = config.user
           resolve()
         })
-        .catch((error: any) => {
+        .catch((error: unknown) => {
           console.error('加载教务系统配置失败:', error)
           reject(error)
         })
     })
   }
 
-  function login(): Promise<void> {
+  const handleLogin = (): Promise<void> => {
     return new Promise((resolve, reject) => {
-      // 先检查配置是否存在
       ExistJwxtLoginConfig()
         .then((exists: boolean) => {
           if (!exists) {
@@ -36,12 +42,10 @@ export const useUserStore = defineStore('user', () => {
             return
           }
 
-          // 加载配置
-          return loadJwxtConfig()
+          return handleLoadJwxtConfig()
         })
         .then(() => {
           message.value = '登录中...'
-          // 使用配置进行登录
           if (jwxtCredentials.value) {
             return JwxtLogin(jwxtCredentials.value)
           } else {
@@ -50,7 +54,6 @@ export const useUserStore = defineStore('user', () => {
           }
         })
         .then((result: number) => {
-          console.log(result)
           if (result === 302) {
             message.value = '登录成功'
             isLoggedIn.value = true
@@ -60,7 +63,7 @@ export const useUserStore = defineStore('user', () => {
             reject(new Error('登录失败'))
           }
         })
-        .catch((error: any) => {
+        .catch((error: unknown) => {
           if (message.value !== '请先配置教务系统' && message.value !== '未找到配置，请先配置教务系统') {
             message.value = '登录失败'
           }
@@ -69,7 +72,7 @@ export const useUserStore = defineStore('user', () => {
     })
   }
 
-  function logout() {
+  const handleLogout = (): void => {
     isLoggedIn.value = false
     userId.value = ''
   }
@@ -79,8 +82,8 @@ export const useUserStore = defineStore('user', () => {
     userId,
     message,
     jwxtCredentials,
-    loadJwxtConfig,
-    login,
-    logout
+    loadJwxtConfig: handleLoadJwxtConfig,
+    login: handleLogin,
+    logout: handleLogout
   }
 })

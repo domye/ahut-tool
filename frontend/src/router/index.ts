@@ -1,3 +1,6 @@
+// frontend/src/router/index.ts
+// 路由配置文件，包含懒加载和路由守卫
+
 import { createRouter, createWebHistory } from 'vue-router'
 import type { RouteRecordRaw } from 'vue-router'
 
@@ -6,11 +9,6 @@ const routes: Array<RouteRecordRaw> = [
     path: '/',
     redirect: '/main/home'
   },
-  // {
-  //   path: '/login',
-  //   name: 'Login',
-  //   component: () => import('../views/Login.vue')
-  // },
   {
     path: '/main',
     name: 'Main',
@@ -65,9 +63,7 @@ const router = createRouter({
   routes
 })
 
-// 路由守卫
 router.beforeEach((to, from, next) => {
-  // 由于应用启动时会自动登录，所以不再需要登录检查
   next()
 })
 

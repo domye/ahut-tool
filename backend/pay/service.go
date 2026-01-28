@@ -1,3 +1,6 @@
+// backend/pay/service.go
+// 缴费系统服务，管理 HTTP 客户端和会话状态
+
 package pay
 
 import (
@@ -9,7 +12,6 @@ type Service struct {
 	cookie string
 }
 
-// NewService 创建新的Service实例
 func NewService() *Service {
 	return &Service{
 		client: resty.New(),

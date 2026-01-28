@@ -1,4 +1,7 @@
 
+<!-- frontend/src/views/News.vue -->
+// 校园新闻页面组件，展示学校新闻、学术通知和公告通知
+
 <template>
   <div class="news-container">
     <h1 class="page-title">校园新闻</h1>
@@ -23,7 +26,7 @@
           v-for="news in currentNews"
           :key="news.url"
           class="news-item"
-          @click="openNewsUrl(news.url)"
+          @click="handleOpenNewsUrl(news.url)"
         >
           <div class="news-title">{{ news.title }}</div>
           <div class="news-date">{{ news.date }}</div>
@@ -34,6 +37,7 @@
     </div>
   </div>
 </template>
+
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
@@ -61,7 +65,7 @@ const announcementNews = ref<models.News[]>([])
 
 const currentNews = ref<models.News[]>([])
 
-async function fetchSchoolNews() {
+async function handleFetchSchoolNews() {
   try {
     loading.value = true
     error.value = ''
@@ -76,7 +80,7 @@ async function fetchSchoolNews() {
   }
 }
 
-async function fetchAcademicNews() {
+async function handleFetchAcademicNews() {
   try {
     loading.value = true
     error.value = ''
@@ -91,7 +95,7 @@ async function fetchAcademicNews() {
   }
 }
 
-async function fetchAnnouncementNews() {
+async function handleFetchAnnouncementNews() {
   try {
     loading.value = true
     error.value = ''
@@ -109,7 +113,6 @@ async function fetchAnnouncementNews() {
 function updateCurrentNews() {
   switch (activeTab.value) {
     case 'summary':
-      // 合并所有新闻并按日期排序
       const allNews = [...schoolNews.value, ...academicNews.value, ...announcementNews.value]
       currentNews.value = allNews.sort((a, b) => {
         return new Date(b.date).getTime() - new Date(a.date).getTime()
@@ -130,40 +133,37 @@ function updateCurrentNews() {
 function handleTabChange(tabId: string) {
   activeTab.value = tabId
 
-  // 如果切换到汇总tab，需要确保所有数据都已加载
   if (tabId === 'summary') {
     if (schoolNews.value.length === 0) {
-      fetchSchoolNews()
+      handleFetchSchoolNews()
     }
     if (academicNews.value.length === 0) {
-      fetchAcademicNews()
+      handleFetchAcademicNews()
     }
     if (announcementNews.value.length === 0) {
-      fetchAnnouncementNews()
+      handleFetchAnnouncementNews()
     }
   } else {
-    // 如果该标签页的数据还未加载，则加载对应数据
     if (tabId === 'school' && schoolNews.value.length === 0) {
-      fetchSchoolNews()
+      handleFetchSchoolNews()
     } else if (tabId === 'academic' && academicNews.value.length === 0) {
-      fetchAcademicNews()
+      handleFetchAcademicNews()
     } else if (tabId === 'announcement' && announcementNews.value.length === 0) {
-      fetchAnnouncementNews()
+      handleFetchAnnouncementNews()
     }
   }
 
   updateCurrentNews()
 }
 
-function openNewsUrl(url: string) {
+function handleOpenNewsUrl(url: string) {
   window.open(url, '_blank')
 }
 
 onMounted(() => {
-  // 加载所有新闻数据
-  fetchSchoolNews()
-  fetchAcademicNews()
-  fetchAnnouncementNews()
+  handleFetchSchoolNews()
+  handleFetchAcademicNews()
+  handleFetchAnnouncementNews()
 })
 </script>
 

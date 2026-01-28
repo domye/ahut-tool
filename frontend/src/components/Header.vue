@@ -1,3 +1,6 @@
+// frontend/src/components/Header.vue
+// 顶部导航栏组件，包含用户信息和配置按钮
+
 <script setup lang="ts">
 import { useRouter } from 'vue-router'
 import { useUserStore } from '../store/user'

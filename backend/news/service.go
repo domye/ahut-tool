@@ -1,3 +1,6 @@
+// backend/news/service.go
+// 新闻服务，管理 HTTP 客户端和会话状态
+
 package news
 
 import (
@@ -8,7 +11,6 @@ type Service struct {
 	client *resty.Client
 }
 
-// NewService 创建新的Service实例
 func NewService() *Service {
 	return &Service{
 		client: resty.New(),
