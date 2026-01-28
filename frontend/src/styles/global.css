@@ -130,3 +130,52 @@
   opacity: 0;
   transform: rotate(-5deg) scale(0.9);
 }
+
+/* 滚动条样式美化 */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #e0e5ec;
+  border-radius: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(163, 177, 198, 0.6);
+  border-radius: 8px;
+  border: 2px solid #e0e5ec;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(163, 177, 198, 0.8);
+}
+
+::-webkit-scrollbar-thumb:active {
+  background: rgba(163, 177, 198, 1);
+}
+
+/* Firefox 滚动条样式 */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(163, 177, 198, 0.6) #e0e5ec;
+}
+
+*::-webkit-scrollbar {
+  width: 8px;
+}
+
+*::-webkit-scrollbar-track {
+  background: #e0e5ec;
+}
+
+*::-webkit-scrollbar-thumb {
+  background-color: rgba(163, 177, 198, 0.6);
+  border-radius: 8px;
+  border: 2px solid #e0e5ec;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(163, 177, 198, 0.8);
+}
